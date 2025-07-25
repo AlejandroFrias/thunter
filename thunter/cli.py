@@ -47,7 +47,7 @@ Commands:
 """
 
 console = Console()
-if settings.HUNT_SILENT:
+if settings.THUNTER_SILENT:
     console = Console(file=StringIO())
 
 
