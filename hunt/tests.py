@@ -5,7 +5,7 @@ import tempfile
 from unittest import TestCase
 
 import settings
-from task import TaskHunter
+from hunt.task import TaskHunter
 
 
 class TestHunt(TestCase):

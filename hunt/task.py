@@ -7,7 +7,7 @@ from functools import total_ordering
 from typing import NamedTuple, Optional, Union
 
 import settings
-from constants import (
+from hunt.constants import (
     HISTORY_TABLE,
     STATUS_ORDERING,
     HuntCouldNotFindTaskError,
@@ -16,7 +16,7 @@ from constants import (
     Status,
     TASKS_TABLE,
 )
-from utils import calc_progress, needs_init, display_time
+from hunt.utils import calc_progress, needs_init, display_time
 
 
 def now():

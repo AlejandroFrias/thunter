@@ -33,8 +33,8 @@ setup(
         ],
     },
     install_requires=[
-        "rich",
         "typer",
+        "rich",
         "parsimonious",
     ],
 )
