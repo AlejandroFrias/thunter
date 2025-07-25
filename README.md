@@ -18,11 +18,11 @@ Just try it. I'll finish this before putting it up on pypi
 ```
 git clone https://github.com/AlejandroFrias/hunt
 cd hunt
-make setup
+make install
 ```
 
 ## My git/hunt workflow
- 
+
 ```
 ## ~/.gitconfig
 
@@ -31,7 +31,7 @@ make setup
     chb = ! git checkout -b $1 && hash hunt 2>/dev/null && read -er -p 'Estimate '$1' (hrs): ' estimate && hunt --silent workon --create --estimate ${estimate:-0}
     ch = "!git checkout $1 && hash hunt 2>/dev/null && if [ \"$(git rev-parse --abbrev-ref HEAD)\" = \"master\" ]; then hunt --silent stop; else hunt --silent workon --create $(git rev-parse --abbrev-ref HEAD); fi && echo 1>/dev/null"
     chm = ! git checkout master && hash hunt 2>/dev/null && hunt --silent stop
-    pushc = ! git push --set-upstream origin $(git rev-parse --abbrev-ref HEAD) && hash hunt 2>/dev/null && hunt --silent stop 
+    pushc = ! git push --set-upstream origin $(git rev-parse --abbrev-ref HEAD) && hash hunt 2>/dev/null && hunt --silent stop
     bd = ! git branch -d $1 && hash hunt 2>/dev/null && hunt --silent finish
     bdd = ! git branch -D $1 && hash hunt 2>/dev/null && hunt --silent finish
 

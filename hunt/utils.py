@@ -8,56 +8,58 @@ from time import strptime
 import calendar
 import time
 
-from hunt import settings
-from .constants import CURRENT
-from .constants import FINISHED
-from .constants import HuntTaskValidationError
-from .constants import IN_PROGRESS
-from .constants import TODO
+import settings
+from constants import CURRENT
+from constants import FINISHED
+from constants import HuntTaskValidationError
+from constants import IN_PROGRESS
+from constants import TODO
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-grammar = Grammar(r"""
-    task = name newline+
-           estimate newline+
-           status newline+
-           description newline+
-           history newline*
-    name = "NAME:" whitespace? phrase whitespace?
-    estimate = "ESTIMATE:" whitespace? int whitespace?
-    description = "DESCRIPTION:" whitespace? phrase whitespace?
-    status = "STATUS:" whitespace? status_type whitespace?
-    status_type = "Current" / "TODO" / "In Progress" / "Finished"
-    history = whitespace? "HISTORY" whitespace? newline+
-              history_records?
-    whitespace = ~"[ \t]+"
-    newline = "\n" / "\n\r"
-    phrase = word (whitespace word)*
-    word = ~"[0-9a-zA-Z.!?&-_]+"
-    int = ~"[1-9]\d*" / "None"
-    history_records = history_record (next_history_record)*
-    history_record = history_record_type whitespace time whitespace?
-    next_history_record = newline+ history_record
-    history_record_type = "Start" / "Stop"
-    time = year "-" month "-" day " " hours ":" minutes ":" seconds
-    year = ~"20\d{2}"
-    month = ~"0[1-9]" / ~"1[0-2]"
-    day = ~"0[1-9]" / ~"1\d" / ~"2\d" / ~"3[0-1]"
-    hours = ~"0\d" / ~"1\d" / ~"2[0-3]"
-    minutes = ~"[0-5]\d"
-    seconds = minutes
-    """)
-
 
 class TaskVisitor(NodeVisitor):
-    grammar = grammar
+    grammar: Grammar
+
+    def __init__(self):
+        super().__init__()
+        self.grammar = Grammar(
+            """
+task = name newline+
+        estimate newline+
+        status newline+
+        description newline+
+        history newline*
+name = "NAME:" whitespace? phrase whitespace?
+estimate = "ESTIMATE:" whitespace? int whitespace?
+description = "DESCRIPTION:" whitespace? phrase whitespace?
+status = "STATUS:" whitespace? status_type whitespace?
+status_type = "Current" / "TODO" / "In Progress" / "Finished"
+history = whitespace? "HISTORY" whitespace? newline+
+            history_records?
+whitespace = ~"[ \\t]+"
+newline = "\\n" / "\\n\\r"
+phrase = word (whitespace word)*
+word = ~"[0-9a-zA-Z.!?&-_]+"
+int = ~"[1-9]\\d*" / "None"
+history_records = history_record (next_history_record)*
+history_record = history_record_type whitespace time whitespace?
+next_history_record = newline+ history_record
+history_record_type = "Start" / "Stop"
+time = year "-" month "-" day " " hours ":" minutes ":" seconds
+year = ~"20\\d{2}"
+month = ~"0[1-9]" / ~"1[0-2]"
+day = ~"0[1-9]" / ~"1\\d" / ~"2\\d" / ~"3[0-1]"
+hours = ~"0\\d" / ~"1\\d" / ~"2[0-3]"
+minutes = ~"[0-5]\\d"
+seconds = minutes
+"""
+        )
 
     def visit_task(self, task, children):
-        (name, _nl1,
-         estimate, _nl2,
-         status, _nl3,
-         description, _nl4,
-         history, _nl5) = children
+        (name, _nl1, estimate, _nl2, status, _nl3, description, _nl4, history, _nl5) = (
+            children
+        )
         return {
             "name": name,
             "estimate": estimate,
@@ -115,8 +117,8 @@ class TaskVisitor(NodeVisitor):
     def visit_int(self, node, children):
         return node.text
 
-    def generic_visit(self, node, children):
-        return children
+    def generic_visit(self, node, visited_children):
+        return visited_children
 
 
 def parse_task(task_display):
@@ -132,37 +134,42 @@ def hunt_assert(expr, message):
 
 
 def validate_task_dict(task_dict):
-    if task_dict['status'] == TODO:
+    if task_dict["status"] == TODO:
         hunt_assert(
-            len(task_dict['history']) == 0,
-            "Can't have a history if the status is TODO")
+            len(task_dict["history"]) == 0, "Can't have a history if the status is TODO"
+        )
     else:
         hunt_assert(
-            len(task_dict['history']) > 0,
-            "Must have a history if status is %s" % task_dict['status'])
+            len(task_dict["history"]) > 0,
+            "Must have a history if status is %s" % task_dict["status"],
+        )
 
-    if task_dict['status'] == CURRENT:
-        last_history_record = task_dict['history'][-1]
+    if task_dict["status"] == CURRENT:
+        last_history_record = task_dict["history"][-1]
         hunt_assert(
             last_history_record[0] is True,
-            "Last history record must be a Start if the status is Current")
-    elif task_dict['status'] in [IN_PROGRESS, FINISHED]:
-        last_history_record = task_dict['history'][-1]
+            "Last history record must be a Start if the status is Current",
+        )
+    elif task_dict["status"] in [IN_PROGRESS, FINISHED]:
+        last_history_record = task_dict["history"][-1]
         hunt_assert(
             last_history_record[0] is False,
-            "Last history record must be a Stop if the status is %s" %
-            task_dict['status'])
+            "Last history record must be a Stop if the status is %s"
+            % task_dict["status"],
+        )
 
-    if task_dict['history']:
+    if task_dict["history"]:
         expect_start = True
         last_history_time = 0
-        for is_start, history_time in task_dict['history']:
+        for is_start, history_time in task_dict["history"]:
             hunt_assert(
                 last_history_time < history_time,
-                "History must be in ascending order by time")
+                "History must be in ascending order by time",
+            )
             hunt_assert(
                 is_start == expect_start,
-                "History must alternate between Start and Stop")
+                "History must alternate between Start and Stop",
+            )
             expect_start = not expect_start
             last_history_time = history_time
 
@@ -190,5 +197,8 @@ def display_progress(seconds):
     hours, minutes = divmod(minutes, 60)
     return "{0:02d}:{1:02d}:{2:02d}".format(hours, minutes, seconds)
 
+
 def needs_init():
-    return not os.path.exists(settings.HUNT_DIR) or not os.path.exists(settings.DATABASE)
+    return not os.path.exists(settings.HUNT_DIR) or not os.path.exists(
+        settings.DATABASE
+    )

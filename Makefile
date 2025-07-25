@@ -2,11 +2,16 @@
 
 .PHONY: help
 help:
-	@echo "Try 'make install' or 'make develop'"
+	@echo "Try 'make install' or 'make develop' to start using Hunt"
+	@echo "'make db' will open the Hunt database in SQLite for direct access if needed, but hunt 'edit' should be preferred"
 
 .PHONY: develop
 develop:
 	python3 setup.py develop
+
+.PHONY: install
+develop:
+	python3 setup.py install
 
 .PHONY: clean
 clean:

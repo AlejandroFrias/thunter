@@ -1,0 +1,10 @@
+click==8.2.1
+markdown-it-py==3.0.0
+mdurl==0.1.2
+parsimonious==0.10.0
+Pygments==2.19.2
+regex==2024.11.6
+rich==14.0.0
+shellingham==1.5.4
+typer==0.16.0
+typing_extensions==4.14.1

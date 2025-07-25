@@ -1,10 +1,8 @@
 """
 Based on docker-compose.
 """
-from inspect import getdoc
 
-from docopt import docopt
-from docopt import DocoptExit
+from inspect import getdoc
 
 
 class Dispatcher:
@@ -15,16 +13,15 @@ class Dispatcher:
     def parse(self, argv):
         command_doc = getdoc(self.command)
         command_options = _docopt(command_doc, argv, **self.options)
-        sub_command = command_options['COMMAND']
+        sub_command = command_options["COMMAND"]
 
         if sub_command is None:
             raise SystemExit(command_doc)
 
-        command_attrs = filter(
-            lambda a: not a.startswith('__'), dir(self.command))
+        command_attrs = filter(lambda a: not a.startswith("__"), dir(self.command))
         sub_command_name = None
         for attr in command_attrs:
-            if attr.startswith(sub_command.replace('-', '_')):
+            if attr.startswith(sub_command.replace("-", "_")):
                 if sub_command_name:
                     raise AmbiguousCommand(sub_command, self)
                 sub_command_name = attr
@@ -40,7 +37,7 @@ class Dispatcher:
 
         sub_command_options = _docopt(
             sub_command_doc,
-            command_options['ARGS'],
+            command_options["ARGS"],
         )
         return sub_command_options, sub_command_handler, command_options
 
@@ -62,8 +59,7 @@ class NoSuchCommand(Exception):
 
 class AmbiguousCommand(Exception):
     def __init__(self, command, supercommand):
-        super(AmbiguousCommand, self).__init__(
-            "Ambiguous command: %s" % command)
+        super(AmbiguousCommand, self).__init__("Ambiguous command: %s" % command)
 
         self.command = command
         self.supercommand = supercommand
