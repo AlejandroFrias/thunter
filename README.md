@@ -13,6 +13,8 @@ TODO
 
 Just try it. I'll finish this before putting it up on pypi
 
+TODO: add created at time stamp and display that somewhere...
+
 ## Installation
 
 ```

@@ -1,10 +1,23 @@
-CURRENT = 'Current'
-IN_PROGRESS = 'In Progress'
-TODO = 'TODO'
-FINISHED = 'Finished'
-STATUSES = [CURRENT, IN_PROGRESS, TODO, FINISHED]
-TASKS_TABLE = 'tasks'
-HISTORY_TABLE = 'history'
+from enum import Enum
+
+
+TASKS_TABLE = "tasks"
+HISTORY_TABLE = "history"
+
+
+class Status(Enum):
+    CURRENT = "Current"
+    IN_PROGRESS = "In Progress"
+    TODO = "TODO"
+    FINISHED = "Finished"
+
+
+STATUS_ORDERING = [
+    Status.CURRENT.value,
+    Status.IN_PROGRESS.value,
+    Status.TODO.value,
+    Status.FINISHED.value,
+]
 
 
 class HuntError(Exception):
@@ -29,6 +42,7 @@ class HuntFoundMultipleTasksError(HuntError):
 
 class HuntTaskValidationError(HuntError):
     exit_status = 6
+
 
 class HuntNotInitializedError(HuntError):
     exit_status = 7

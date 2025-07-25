@@ -1,23 +1,21 @@
+from enum import Enum
 import sqlite3
 import time
 from datetime import datetime
 from contextlib import contextmanager
 from functools import total_ordering
-from typing import Optional, Union
+from typing import NamedTuple, Optional, Union
 
 import settings
-from constants import CURRENT
-from constants import FINISHED
-from constants import HISTORY_TABLE
-from constants import HuntAlreadyWorkingOnTaskError
-from constants import HuntCouldNotFindTaskError
-from constants import HuntFoundMultipleTasksError
-from constants import HuntNoCurrentTaskError
-from constants import HuntNotInitializedError
-from constants import IN_PROGRESS
-from constants import STATUSES
-from constants import TASKS_TABLE
-from constants import TODO
+from constants import (
+    HISTORY_TABLE,
+    STATUS_ORDERING,
+    HuntCouldNotFindTaskError,
+    HuntFoundMultipleTasksError,
+    HuntNotInitializedError,
+    Status,
+    TASKS_TABLE,
+)
 from utils import calc_progress
 from utils import needs_init
 from utils import display_time
@@ -28,18 +26,26 @@ def now():
 
 
 @total_ordering
-class Task(object):  # TODO named tuple!
-    def __init__(self, record):
-        self.id = record[0]
-        self.name = record[1]
-        self.estimate = record[2]
-        self.description = record[3]
-        self.status = record[4]
-        self.last_modified = record[5]
+class Task(NamedTuple):  # TODO named tuple!
+    id: int
+    name: str
+    estimate: Optional[int]
+    description: Optional[str]
+    status: Status
+    last_modified: int
 
     @classmethod
-    def from_record(cls, record):
-        return cls(record)
+    def from_record(
+        cls, record: tuple[int, str, Optional[int], Optional[str], str, int]
+    ):
+        return cls(
+            id=record[0],
+            name=record[1],
+            estimate=record[2],
+            description=record[3],
+            status=Status(record[4]),
+            last_modified=record[5],
+        )
 
     @property
     def last_modified_display(self):
@@ -63,8 +69,8 @@ class Task(object):  # TODO named tuple!
         return str(self)
 
     def __lt__(self, other):
-        return (STATUSES.index(self.status), -self.last_modified) < (
-            STATUSES.index(other.status),
+        return (STATUS_ORDERING.index(self.status.value), -self.last_modified) < (
+            STATUS_ORDERING.index(other.status.value),
             -other.last_modified,
         )
 
@@ -125,11 +131,14 @@ class TaskHunter:
         else:
             self.database = settings.DATABASE
 
-    def get_task(self, task_identifier: Union[str, int], statuses=None) -> Task:
+    def get_task(
+        self, task_identifier: Union[str, int], statuses: Optional[set[Status]] = None
+    ) -> Task:
+        params: list[str] = []
         if isinstance(task_identifier, int) or task_identifier.isdigit():
             where_clause = "id=?"
             order_by = "last_modified DESC"
-            params = [task_identifier]
+            params = [str(task_identifier)]
         elif task_identifier == "$CURRENT":
             where_clause = None
             order_by = "last_modified DESC"
@@ -147,7 +156,7 @@ class TaskHunter:
             else:
                 where_clause = "status IN (" + ",".join(len(statuses) * "?") + ")"
 
-            params.extend(statuses)
+            params.extend(map(lambda s: s.value, statuses))
 
         tasks = self.select_from_task(
             where_clause=where_clause, order_by=order_by, params=params
@@ -184,11 +193,16 @@ class TaskHunter:
 
     def create_task(self, name, estimate=None, description=None):
         new_task_id = self.insert_task(
-            Task((None, name, estimate, description, TODO, now()))
+            name, estimate, description, status=Status.TODO, last_modified=now()
         )
         return self.get_task(new_task_id)
 
-    def get_tasks(self, statuses=None, starts_with=None, contains=None):
+    def get_tasks(
+        self,
+        statuses: Optional[set[Status]] = None,
+        starts_with: Optional[str] = None,
+        contains: Optional[str] = None,
+    ) -> list[Task]:
         where_clause_param_tuples = []
         if starts_with:
             where_clause_param_tuples.append(("name LIKE ?", (starts_with + "%",)))
@@ -196,7 +210,10 @@ class TaskHunter:
             where_clause_param_tuples.append(("name LIKE ?", ("%" + contains + "%",)))
         if statuses:
             where_clause_param_tuples.append(
-                ("status IN (" + ",".join(len(statuses) * "?") + ")", statuses)
+                (
+                    "status IN (" + ",".join(len(statuses) * "?") + ")",
+                    map(lambda s: s.value, statuses),
+                )
             )
         if where_clause_param_tuples:
             where_clauses, where_params = zip(*where_clause_param_tuples)
@@ -224,7 +241,8 @@ class TaskHunter:
 
     def get_current_task(self):
         current_tasks = self.select_from_task(
-            where_clause="status IN (?)", params=(CURRENT,)
+            where_clause="status IN (?)",
+            params=[Status.CURRENT.value],
         )
         if len(current_tasks) == 0:
             return None
@@ -240,20 +258,20 @@ class TaskHunter:
             if current_task.id == task.id:
                 return
             self.insert_history(TaskHistory((None, current_task.id, False, now())))
-            self.update_task(current_task.id, "status", IN_PROGRESS)
+            self.update_task(current_task.id, "status", Status.IN_PROGRESS.value)
         self.insert_history(TaskHistory((None, task.id, True, now())))
-        self.update_task(task.id, "status", CURRENT)
+        self.update_task(task.id, "status", Status.CURRENT.value)
 
     def stop_current_task(self) -> Optional[Task]:
         current_task = self.get_current_task()
         if not current_task:
             return
         self.insert_history(TaskHistory((None, current_task.id, False, now())))
-        self.update_task(current_task.id, "status", IN_PROGRESS)
+        self.update_task(current_task.id, "status", Status.IN_PROGRESS.value)
         return self.get_task(current_task.id)
 
     def finish_task(self, taskid):
-        self.update_task(taskid, "status", FINISHED)
+        self.update_task(taskid, "status", Status.FINISHED.value)
 
     def estimate_task(self, taskid, estimate):
         self.update_task(taskid, "estimate", estimate)
@@ -266,13 +284,18 @@ class TaskHunter:
         self.execute(delete_task_sql, (taskid,))
         self.execute(delete_history_sql, (taskid,))
 
-    def update_task(self, taskid, field, value):
+    def update_task(self, taskid: int, field: str, value: Union[str, int]):
         sql = ("UPDATE {table} SET {field}=?, last_modified=? " "WHERE id=?").format(
             table=TASKS_TABLE, field=field
         )
         self.execute(sql, (value, now(), taskid))
 
-    def select_from_task(self, where_clause=None, order_by=None, params=None):
+    def select_from_task(
+        self,
+        where_clause: Optional[str] = None,
+        order_by: Optional[str] = None,
+        params: Optional[list[str]] = None,
+    ):
         return list(
             map(
                 Task.from_record,
@@ -299,7 +322,14 @@ class TaskHunter:
         with self.connect() as conn:
             return conn.execute(sql, params or []).fetchall()
 
-    def insert_task(self, task: Task) -> int:
+    def insert_task(
+        self,
+        name: str,
+        estimate: Optional[int],
+        description: Optional[str],
+        status: Status,
+        last_modified: int,
+    ) -> int:
         sql = (
             "INSERT INTO {table} "
             "(name,estimate,description,status,last_modified) "
@@ -309,15 +339,15 @@ class TaskHunter:
             new_task_id = conn.execute(
                 sql,
                 (
-                    task.name,
-                    task.estimate,
-                    task.description,
-                    task.status,
-                    task.last_modified,
+                    name,
+                    estimate,
+                    description,
+                    status.value,
+                    last_modified,
                 ),
             ).lastrowid
             if new_task_id == None:
-                raise AssertionError("Could not insert task: " + str(task))
+                raise AssertionError(f"Could not insert task: {name}")
         return new_task_id
 
     def insert_history(self, history):

@@ -4,9 +4,8 @@ import os
 import tempfile
 from collections import defaultdict
 from subprocess import call
-from contextlib import redirect_stdout
 from io import StringIO
-from typing import List, Optional, Union
+from typing import Optional
 from typing_extensions import Annotated
 
 import sqlite3
@@ -16,19 +15,9 @@ from rich.console import Console
 from rich.table import Table
 
 import settings
-from constants import CURRENT
-from constants import FINISHED
-from constants import HuntError
-from constants import HuntCouldNotFindTaskError
-from constants import IN_PROGRESS
-from constants import STATUSES
-from constants import TODO
-from task import TaskHistory
-from task import TaskHunter
-from utils import calc_progress
-from utils import display_progress
-from utils import needs_init
-from utils import parse_task
+from constants import HuntError, HuntCouldNotFindTaskError, Status
+from task import TaskHistory, TaskHunter
+from utils import calc_progress, display_progress, needs_init, parse_task
 
 hunt_cli_app = typer.Typer(no_args_is_help=True)
 
@@ -176,23 +165,23 @@ def ls(
     ] = None,
 ):
     """List tasks. Defaults to listing all open tasks (CURRENT, IN_PROGRESS, TODO)."""
-    statuses = set()
+    statuses: set[Status] = set()
     if all:
-        statuses.update(STATUSES)
+        statuses.update(Status)
     if open:
-        statuses.update([CURRENT, IN_PROGRESS, TODO])
+        statuses.update([Status.CURRENT, Status.IN_PROGRESS, Status.TODO])
     if started:
-        statuses.update([CURRENT, IN_PROGRESS])
+        statuses.update([Status.CURRENT, Status.IN_PROGRESS])
     if current:
-        statuses.add(CURRENT)
+        statuses.add(Status.CURRENT)
     if in_progress:
-        statuses.add(IN_PROGRESS)
+        statuses.add(Status.IN_PROGRESS)
     if todo:
-        statuses.add(TODO)
+        statuses.add(Status.TODO)
     if finished:
-        statuses.add(FINISHED)
+        statuses.add(Status.FINISHED)
     if not statuses:
-        statuses.update([CURRENT, IN_PROGRESS, TODO])
+        statuses.update([Status.CURRENT, Status.IN_PROGRESS, Status.TODO])
 
     # Get the filtered and sorted list of tasks to display
     hunt = TaskHunter()
@@ -220,21 +209,18 @@ def ls(
         "STATUS",
         box=box.MINIMAL_HEAVY_HEAD,
     )
-    for rowid, task in enumerate(tasks):
-        seconds = taskid2progress[task.id]
-        minutes, seconds = divmod(seconds, 60)
-        hours, minutes = divmod(minutes, 60)
+    for task in tasks:
         row = (
             str(task.id),
             task.name,
             task.estimate_display,
             display_progress(taskid2progress[task.id]),
-            task.status,
+            task.status.value,
         )
         style = None
-        if task.status == CURRENT:
+        if task.status == Status.CURRENT:
             style = "green"
-        elif task.status == IN_PROGRESS:
+        elif task.status == Status.IN_PROGRESS:
             style = "yellow"
         table.add_row(*row, style=style)
     console.print(table)
@@ -256,7 +242,7 @@ def show(task_id: Annotated[Optional[str], typer.Argument()] = None):
 
 @hunt_cli_app.command()
 def create(
-    task_id: Annotated[List[str], typer.Argument()],
+    task_id: Annotated[list[str], typer.Argument()],
     estimate: Annotated[
         Optional[int],
         typer.Option(
@@ -278,12 +264,12 @@ def create(
         estimate=estimate,
         description=description,
     )
-    show(task_id=new_task.id)
+    show(task_id=str(new_task.id))
 
 
 @hunt_cli_app.command()
 def workon(
-    task_id: Annotated[Optional[List[str]], typer.Argument()] = None,
+    task_id: Annotated[Optional[list[str]], typer.Argument()] = None,
     create: Annotated[
         Optional[bool],
         typer.Option(
@@ -319,7 +305,7 @@ def workon(
     try:
         task = hunt.get_task(
             task_id_str or "$CURRENT",
-            statuses=[CURRENT, IN_PROGRESS, TODO],
+            statuses=set([Status.CURRENT, Status.IN_PROGRESS, Status.TODO]),
         )
     except HuntCouldNotFindTaskError:
         if create:
@@ -346,7 +332,7 @@ def workon(
 def restart(task_id: Annotated[str, typer.Argument()]):
     """Restart a finished task (progress will continue from before)."""
     hunt = TaskHunter()
-    task = hunt.get_task(task_id, statuses=[FINISHED])
+    task = hunt.get_task(task_id, statuses=set([Status.FINISHED]))
     if task:
         hunt.workon_task(task.id)
     ls(open=True)
@@ -460,7 +446,7 @@ def edit(
 @hunt_cli_app.command()
 def rm(
     task_id: Annotated[
-        List[str], typer.Argument(help="ID or name of task to be removed.")
+        list[str], typer.Argument(help="ID or name of task to be removed.")
     ],
     force: Annotated[
         bool, typer.Option("--force", "-f", help="No confirmation prompt")

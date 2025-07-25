@@ -1,19 +1,12 @@
 import os
 
-from parsimonious import Grammar
-from parsimonious import NodeVisitor
-from time import gmtime
-from time import strftime
-from time import strptime
+from parsimonious import Grammar, NodeVisitor
+from time import gmtime, strftime, strptime
 import calendar
 import time
 
 import settings
-from constants import CURRENT
-from constants import FINISHED
-from constants import HuntTaskValidationError
-from constants import IN_PROGRESS
-from constants import TODO
+from constants import HuntTaskValidationError, Status
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -134,7 +127,7 @@ def hunt_assert(expr, message):
 
 
 def validate_task_dict(task_dict):
-    if task_dict["status"] == TODO:
+    if task_dict["status"] == Status.TODO:
         hunt_assert(
             len(task_dict["history"]) == 0, "Can't have a history if the status is TODO"
         )
@@ -144,13 +137,13 @@ def validate_task_dict(task_dict):
             "Must have a history if status is %s" % task_dict["status"],
         )
 
-    if task_dict["status"] == CURRENT:
+    if task_dict["status"] == Status.CURRENT:
         last_history_record = task_dict["history"][-1]
         hunt_assert(
             last_history_record[0] is True,
             "Last history record must be a Start if the status is Current",
         )
-    elif task_dict["status"] in [IN_PROGRESS, FINISHED]:
+    elif task_dict["status"] in [Status.IN_PROGRESS, Status.FINISHED]:
         last_history_record = task_dict["history"][-1]
         hunt_assert(
             last_history_record[0] is False,
@@ -174,7 +167,7 @@ def validate_task_dict(task_dict):
             last_history_time = history_time
 
 
-def display_time(seconds):
+def display_time(seconds: int) -> str:
     return strftime(TIME_FORMAT, gmtime(seconds))
 
 
