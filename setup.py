@@ -16,7 +16,7 @@ setup(
     author_email="joker454@gmail.com",
     description="A CLI To Do list w/ time tracking.",
     long_description=long_description,
-    url="https://github.com/AlejandroFrias/hunt",
+    url="https://github.com/AlejandroFrias/thunter",
     license="MIT",
     packages=find_packages(),
     include_package_data=True,

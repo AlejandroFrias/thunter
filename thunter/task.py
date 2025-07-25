@@ -10,9 +10,9 @@ from thunter import settings
 from thunter.constants import (
     HISTORY_TABLE,
     STATUS_ORDERING,
-    HuntCouldNotFindTaskError,
-    HuntFoundMultipleTasksError,
-    HuntNotInitializedError,
+    ThunterCouldNotFindTaskError,
+    ThunterFoundMultipleTasksError,
+    ThunterNotInitializedError,
     Status,
     TASKS_TABLE,
 )
@@ -122,8 +122,8 @@ class TaskHistory(NamedTuple):
 class TaskHunter:
     def __init__(self, database=None):
         if not database and needs_init():
-            raise HuntNotInitializedError(
-                "[red]Error[/red]: Run [bold]hunt init[/bold] to initialize hunt database"
+            raise ThunterNotInitializedError(
+                "[red]Error[/red]: Run [bold]thunter init[/bold] to initialize task database"
             )
         if database:
             self.database = database
@@ -162,13 +162,13 @@ class TaskHunter:
         )
 
         if len(tasks) == 0:
-            raise HuntCouldNotFindTaskError(
+            raise ThunterCouldNotFindTaskError(
                 f"Could not find task for identifier: [yellow]{task_identifier}[/yellow]"
             )
         elif len(tasks) > 1:
             if task_identifier == "$CURRENT":
                 return tasks[0]
-            raise HuntFoundMultipleTasksError(
+            raise ThunterFoundMultipleTasksError(
                 f"Found multiple tasks for identifier: [yellow]{task_identifier}[/yellow]"
             )
 

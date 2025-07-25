@@ -20,29 +20,29 @@ STATUS_ORDERING = [
 ]
 
 
-class HuntError(Exception):
+class ThunterError(Exception):
     exit_status = 1
 
 
-class HuntCouldNotFindTaskError(HuntError):
+class ThunterCouldNotFindTaskError(ThunterError):
     exit_status = 2
 
 
-class HuntAlreadyWorkingOnTaskError(HuntError):
+class ThunterAlreadyWorkingOnTaskError(ThunterError):
     exit_status = 3
 
 
-class HuntNoCurrentTaskError(HuntError):
+class ThunterNoCurrentTaskError(ThunterError):
     exit_status = 4
 
 
-class HuntFoundMultipleTasksError(HuntError):
+class ThunterFoundMultipleTasksError(ThunterError):
     exit_status = 5
 
 
-class HuntTaskValidationError(HuntError):
+class ThunterTaskValidationError(ThunterError):
     exit_status = 6
 
 
-class HuntNotInitializedError(HuntError):
+class ThunterNotInitializedError(ThunterError):
     exit_status = 7

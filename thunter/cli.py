@@ -15,49 +15,24 @@ from rich.console import Console
 from rich.table import Table
 
 from thunter import settings
-from thunter.constants import HuntError, HuntCouldNotFindTaskError, Status
-from thunter.task import TaskHistory, TaskHunter
+from thunter.constants import ThunterError, ThunterCouldNotFindTaskError, Status
+from thunter.task import TaskHunter
 from thunter.utils import calc_progress, display_progress, needs_init, parse_task
 
-hunt_cli_app = typer.Typer(no_args_is_help=True)
-
-"""
-An interactive todo list.
-
-Usage:
-    hunt [options] [COMMAND] [ARGS...]
-
-Options:
-    -v, --version       Print version and exit
-    -h, --help          Print usage and exit
-    -s, --silent        Silently run without output (useful for scripts)
-
-Commands:
-    init                Initialize database
-    ls                  List tasks
-    show                Display task
-    create              Create task
-    workon              Start/continue working on a task
-    stop                Stop working on current task
-    finish              Finish a task
-    estimate            Estimate how long task will take
-    restart             Restart a finished task
-    edit                Edit a task
-    rm                  Remove task
-"""
+thunter_cli_app = typer.Typer(no_args_is_help=True)
 
 console = Console()
 if settings.THUNTER_SILENT:
     console = Console(file=StringIO())
 
 
-@hunt_cli_app.command()
+@thunter_cli_app.command()
 def init():
-    """Initialize hunt sqlite database.
-    The database file name can be set with HUNT_DATABASE_NAME, defaults to 'database.db'.
-    The database file can be found in the HUNT_DIRECTORY, defaults to ~/.hunt.
+    """Initialize thunter sqlite database.
+    The database file name can be set with THUNTER_DATABASE_NAME, defaults to 'database.db'.
+    The database file can be found in the THUNTER_DIRECTORY, defaults to ~/.thunter.
     """
-    # check if db and hunt dir exist already exists
+    # check if db and thunter dir exist already exists
     if not needs_init():
         prompt = (
             f"Are you sure you want to re-initialize and lose all tracking info? [yN]"
@@ -66,8 +41,8 @@ def init():
         if not user_sure:
             console.print("Aborting re-initialization")
             return
-        shutil.rmtree(settings.HUNT_DIR)
-    os.mkdir(settings.HUNT_DIR)
+        shutil.rmtree(settings.THUNTER_DIR)
+    os.mkdir(settings.THUNTER_DIR)
     conn = sqlite3.connect(settings.DATABASE)
     conn.execute(
         "CREATE TABLE tasks(id INTEGER PRIMARY KEY, name TEXT, estimate INTEGER, description TEXT, status TEXT, last_modified INTEGER)"
@@ -80,7 +55,7 @@ def init():
 
 
 # flake8: noqa
-@hunt_cli_app.command()
+@thunter_cli_app.command()
 def ls(
     all: Annotated[
         Optional[bool],
@@ -184,15 +159,15 @@ def ls(
         statuses.update([Status.CURRENT, Status.IN_PROGRESS, Status.TODO])
 
     # Get the filtered and sorted list of tasks to display
-    hunt = TaskHunter()
-    tasks = hunt.get_tasks(
+    hunter = TaskHunter()
+    tasks = hunter.get_tasks(
         statuses,
         starts_with=starts_with,
         contains=contains,
     )
 
     # Calculate progress from history
-    history_records = hunt.get_history([task.id for task in tasks])
+    history_records = hunter.get_history([task.id for task in tasks])
     taskid2history = defaultdict(list)
     for record in history_records:
         taskid2history[record.taskid].append(record)
@@ -226,21 +201,21 @@ def ls(
     console.print(table)
 
 
-@hunt_cli_app.command()
+@thunter_cli_app.command()
 def show(task_id: Annotated[Optional[str], typer.Argument()] = None):
     """Display task. Defaults to the currently active task if there is one."""
-    hunt = TaskHunter()
+    hunter = TaskHunter()
     if task_id:
-        task = hunt.get_task(task_id)
+        task = hunter.get_task(task_id)
     else:
-        task = hunt.get_current_task()
+        task = hunter.get_current_task()
         if not task:
             console.print("No current task found.", style="red")
             return
-    console.print(hunt.display_task(task.id))
+    console.print(hunter.display_task(task.id))
 
 
-@hunt_cli_app.command()
+@thunter_cli_app.command()
 def create(
     task_id: Annotated[list[str], typer.Argument()],
     estimate: Annotated[
@@ -258,8 +233,8 @@ def create(
     ] = None,
 ):
     """Create a new task."""
-    hunt = TaskHunter()
-    new_task = hunt.create_task(
+    hunter = TaskHunter()
+    new_task = hunter.create_task(
         " ".join(task_id),
         estimate=estimate,
         description=description,
@@ -267,7 +242,7 @@ def create(
     show(task_id=str(new_task.id))
 
 
-@hunt_cli_app.command()
+@thunter_cli_app.command()
 def workon(
     task_id: Annotated[Optional[list[str]], typer.Argument()] = None,
     create: Annotated[
@@ -300,16 +275,16 @@ def workon(
     ] = None,
 ):
     """Start/continue working on an unfinished task."""
-    hunt = TaskHunter()
+    hunter = TaskHunter()
     task_id_str = " ".join(task_id) if task_id else None
     try:
-        task = hunt.get_task(
+        task = hunter.get_task(
             task_id_str or "$CURRENT",
             statuses=set([Status.CURRENT, Status.IN_PROGRESS, Status.TODO]),
         )
-    except HuntCouldNotFindTaskError:
+    except ThunterCouldNotFindTaskError:
         if task_id_str and create:
-            task = hunt.create_task(
+            task = hunter.create_task(
                 name=task_id_str,
                 estimate=estimate_hours,
                 description=description,
@@ -317,50 +292,50 @@ def workon(
         else:
             raise
 
-    hunt.workon_task(task.id)
+    hunter.workon_task(task.id)
     ls(open=True)
 
 
-@hunt_cli_app.command()
+@thunter_cli_app.command()
 def restart(task_id: Annotated[str, typer.Argument()]):
     """Restart a finished task (progress will continue from before)."""
-    hunt = TaskHunter()
-    task = hunt.get_task(task_id, statuses=set([Status.FINISHED]))
+    hunter = TaskHunter()
+    task = hunter.get_task(task_id, statuses=set([Status.FINISHED]))
     if task:
-        hunt.workon_task(task.id)
+        hunter.workon_task(task.id)
     ls(open=True)
 
 
-@hunt_cli_app.command()
+@thunter_cli_app.command()
 def stop():
     """Stop working on current task."""
-    hunt = TaskHunter()
-    stopped_task = hunt.stop_current_task()
+    hunter = TaskHunter()
+    stopped_task = hunter.stop_current_task()
     if not stopped_task:
         console.print("No current task to stop.", style="yellow")
     else:
         console.print(f"Stopped working on [yellow]{stopped_task.name}[/yellow]!")
 
 
-@hunt_cli_app.command()
+@thunter_cli_app.command()
 def finish(task_id: Annotated[Optional[str], typer.Argument()] = None):
     """Finish a task (defaults to finish current task)."""
-    hunt = TaskHunter()
+    hunter = TaskHunter()
     task = None
     if task_id:
-        task = hunt.get_task(task_id)
+        task = hunter.get_task(task_id)
     else:
-        task = hunt.stop_current_task()
+        task = hunter.stop_current_task()
 
     if not task:
         console.print("No task to finish.", style="yellow")
         return
 
-    hunt.finish_task(task.id)
+    hunter.finish_task(task.id)
     console.print(f"Finished [green]{task.name}[/green]!")
 
 
-@hunt_cli_app.command()
+@thunter_cli_app.command()
 def estimate(
     estimate: Annotated[int, typer.Argument()],
     task_identifier: Annotated[
@@ -394,7 +369,7 @@ def estimate(
     )
 
 
-@hunt_cli_app.command()
+@thunter_cli_app.command()
 def edit(
     task_identifier: Annotated[
         Optional[str],
@@ -440,7 +415,7 @@ def edit(
     ls(starts_with=new_updated_task.name, all=True)
 
 
-@hunt_cli_app.command()
+@thunter_cli_app.command()
 def rm(
     task_id: Annotated[
         list[str], typer.Argument(help="ID or name of task to be removed.")
@@ -471,14 +446,14 @@ def rm(
 
 def main(silent: bool = False):
     try:
-        hunt_cli_app()
+        thunter_cli_app()
     except KeyboardInterrupt:
         sys.exit(1)
-    except HuntError as hunt_error:
+    except ThunterError as thunter_error:
         if settings.DEBUG:
             console.print_exception(show_locals=True)
-        console.print(str(hunt_error))
-        sys.exit(hunt_error.exit_status)
+        console.print(str(thunter_error))
+        sys.exit(thunter_error.exit_status)
 
 
 if __name__ == "__main__":

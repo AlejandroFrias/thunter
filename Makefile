@@ -1,3 +1,3 @@
 .PHONY: db
 db:
-	@sqlite3 $(shell python -c "from hunt import settings; print(settings.DATABASE)")
+	@sqlite3 $(shell python -c "from thunter import settings; print(settings.DATABASE)")

@@ -14,19 +14,29 @@ So I made ths CLI tool that I could incorporate into my existing git workflows. 
 
 ## Features
 
-TODO
-
-Just try it. I'll finish this before putting it up on pypi
-
-TODO: add created at time stamp and display that somewhere...
+The `thunter` CLI tool has commands for:
+* `create` - create a new task and estimate it's length
+* `workon` / `stop` to start and stop tracking time spent on a task
+* `finish` / `restart` to mark a task as completed or to undo that action and restart it
+* `estimate` to update your estimate
+* `edit` to edit any aspect of a task, including it's history
+* `rm` to delete/remove tasks
 
 ## Installation
 
+Via pip
 ```
-git clone https://github.com/AlejandroFrias/hunt
-cd hunt
-make install
+pip install thunter
 ```
+
+### Configuration options
+Environment variables (see [settings.py](thunter/settings.py)):
+- `EDITOR` - editor to use for `thunter edit` command
+- `THUNTER_DIRECTORY` - directory to store thunter files, e.g. the sqlite database of tasks
+- `THUNTER_DATABASE_NAME` - filename of the database
+- `THUNTER_SILENT` - silent all console output. set to true, 1, yes, or y. Useful for scripting
+- `DEBUG` - get stack traces on errors
+
 
 ## My git/thunter workflow
 
@@ -40,19 +50,18 @@ Any time I strayed from these habits, or I wanted to track a task differently, I
 
 Below are the git aliases I use with `thunter`.
 
-The key takeaways for updating your own aliases is that the env variable HUNT_SILENT=1 will silence the hunt output (which can get annoying if you're just trying to use git) and `thunter workon` has the `-c` or `--create` flag so you don't need to worry about creating duplicate tasks. `thunter create` will auto prompt you for an estimate, so it also doesn't play nice with scripts like the other commands do.
+The key takeaways for updating your own aliases is that the env variable THUNTER_SILENT=1 will silence the console output (which can get annoying if you're just trying to use git) and `thunter workon` has the `-c` or `--create` flag so you don't need to worry about creating duplicate tasks. `thunter create` will auto prompt you for an estimate, so it also doesn't play nice with scripts like the other commands do.
 
 ```
 ## ~/.gitconfig
 
 [alias]
-    s = "!HUNT_SILENT=1 git status && hash hunt 2>/dev/null && if [ \"$(git rev-parse --abbrev-ref HEAD)\" = \"main\" ]; then hunt stop; else hunt workon $(git rev-parse --abbrev-ref HEAD); fi"
-    chb = ! git checkout -b $1 && hash hunt 2>/dev/null && read -er -p 'Estimate '$1' (hrs): ' estimate && hunt --silent workon --create --estimate ${estimate:-0}
-    ch = "!git checkout $1 && hash hunt 2>/dev/null && if [ \"$(git rev-parse --abbrev-ref HEAD)\" = \"master\" ]; then hunt --silent stop; else hunt --silent workon --create $(git rev-parse --abbrev-ref HEAD); fi && echo 1>/dev/null"
-    chm = ! git checkout master && hash hunt 2>/dev/null && hunt --silent stop
-    pushc = ! git push --set-upstream origin $(git rev-parse --abbrev-ref HEAD) && hash hunt 2>/dev/null && hunt --silent stop
-    bd = ! git branch -d $1 && hash hunt 2>/dev/null && hunt --silent finish
-    bdd = ! git branch -D $1 && hash hunt 2>/dev/null && hunt --silent finish
+    s = "!git status && hash thunter 2>/dev/null && if [ \"$(git rev-parse --abbrev-ref HEAD)\" = \"main\" ]; then THUNTER_SILENT=1 thunter stop; else THUNTER_SILENT=1 thunter workon $(git rev-parse --abbrev-ref HEAD); fi"
+    ch = "!git checkout $1 && hash thunter 2>/dev/null && if [ \"$(git rev-parse --abbrev-ref HEAD)\" = \"master\" ]; then THUNTER_SILENT=1 thunter stop; else THUNTER_SILENT=1 thunter workon --create $(git rev-parse --abbrev-ref HEAD); fi && echo 1>/dev/null"
+    chb = ! git checkout -b $1 && hash thunter 2>/dev/null && read -er -p 'Estimate '$1' (hrs): ' estimate && THUNTER_SILENT=1 thunter workon --create --estimate ${estimate:-0}
+    chm = ! git checkout main && hash thunter 2>/dev/null && THUNTER_SILENT=1 thunter stop
+    bd = ! git branch -d $1 && hash thunter 2>/dev/null && THUNTER_SILENT=1 thunter finish
+    bdd = ! git branch -D $1 && hash thunter 2>/dev/null && THUNTER_SILENT=1 thunter finish
 
 ```
 
@@ -70,12 +79,24 @@ Swithcing to master, however, will stop working on the current task.
 
 `git bd` and `git bdd` are used to delete the branch and finish the task.
 
-Checking out the branch or checking the status of the branch is often how I start my work sessions, so I have hunt start working on the ticket with current branch name.
+Checking out the branch or checking the status of the branch is often how I start my work sessions, so I have thunter start working on the ticket with current branch name.
 
 I end my work session by either checking out master or pushing my changes, so I stop working on the current task whenever I do that.
 
 Deleting my branches is what I do after I've merged to master, so I finish my tasks as part of branch deletion.
 
-I use `hunt edit` to fix tasks, like editing the start/stop times or updating an estimate or even adding a description to the task.
+I use `thunter edit` to fix tasks, like editing the start/stop times or updating an estimate or even adding a description to the task.
 
-I use `hunt ls` to check my unfinished tasks.
+I use `thunter ls` to check my unfinished tasks.
+
+## Development
+
+
+Install from source code so you can see your changes live:
+```
+git clone https://github.com/AlejandroFrias/thunter
+pip install -e thunter/
+```
+
+TODO:
+- [ ] pytest unittests for the core logic

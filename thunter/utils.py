@@ -6,7 +6,7 @@ import calendar
 import time
 
 from thunter import settings
-from thunter.constants import HuntTaskValidationError, Status
+from thunter.constants import ThunterTaskValidationError, Status
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -120,32 +120,32 @@ def parse_task(task_display):
     return task_dict
 
 
-def hunt_assert(expr, message):
+def thunter_assert(expr, message):
     if not expr:
         error_message = f"[red]Task Validation Error:[/red] {message}"
-        raise HuntTaskValidationError(error_message)
+        raise ThunterTaskValidationError(error_message)
 
 
 def validate_task_dict(task_dict):
     if task_dict["status"] == Status.TODO:
-        hunt_assert(
+        thunter_assert(
             len(task_dict["history"]) == 0, "Can't have a history if the status is TODO"
         )
     else:
-        hunt_assert(
+        thunter_assert(
             len(task_dict["history"]) > 0,
             "Must have a history if status is %s" % task_dict["status"],
         )
 
     if task_dict["status"] == Status.CURRENT:
         last_history_record = task_dict["history"][-1]
-        hunt_assert(
+        thunter_assert(
             last_history_record[0] is True,
             "Last history record must be a Start if the status is Current",
         )
     elif task_dict["status"] in [Status.IN_PROGRESS, Status.FINISHED]:
         last_history_record = task_dict["history"][-1]
-        hunt_assert(
+        thunter_assert(
             last_history_record[0] is False,
             "Last history record must be a Stop if the status is %s"
             % task_dict["status"],
@@ -155,11 +155,11 @@ def validate_task_dict(task_dict):
         expect_start = True
         last_history_time = 0
         for is_start, history_time in task_dict["history"]:
-            hunt_assert(
+            thunter_assert(
                 last_history_time < history_time,
                 "History must be in ascending order by time",
             )
-            hunt_assert(
+            thunter_assert(
                 is_start == expect_start,
                 "History must alternate between Start and Stop",
             )
@@ -192,6 +192,6 @@ def display_progress(seconds):
 
 
 def needs_init():
-    return not os.path.exists(settings.HUNT_DIR) or not os.path.exists(
+    return not os.path.exists(settings.THUNTER_DIR) or not os.path.exists(
         settings.DATABASE
     )
