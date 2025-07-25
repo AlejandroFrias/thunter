@@ -1,11 +1,17 @@
 # HUNT
 
-HUNT is a CLI TODO list with time tracking.
+HUNT is yet another CLI To Do list with time tracking.
 
-Why the name HUNT? Tracking. Hunting. Get it? It's a bit of stretch
+Why the name HUNT? Tracking. Hunting. Get it? It's a bit of stretch, I know.
 
-I wanted a way to track time spent on tasks that was seamless and simple.
-For me that meant a cli I could incorporate into my existing git workflow.
+I made this tool to help me get better at time estimations on tasks.
+I knew I needed to start writing down my time estimates *before* starting the task, track how much time I spent on the task, and then compare the data so I could start to naturally self-correct.
+
+To do this I made ths CLI tool that I could incorporate into my existing git workflows. See [My git/huntworkflow](#my-githunt-workflow) for the aliases I used to achieve this.
+
+
+
+
 
 ## Features
 
@@ -29,7 +35,7 @@ make install
 ## ~/.gitconfig
 
 [alias]
-    s = "!git status && hash hunt 2>/dev/null && if [ \"$(git rev-parse --abbrev-ref HEAD)\" = \"master\" ]; then hunt --silent stop; else hunt --silent workon $(git rev-parse --abbrev-ref HEAD); fi"
+    s = "!HUNT_SILENT=1 git status && hash hunt 2>/dev/null && if [ \"$(git rev-parse --abbrev-ref HEAD)\" = \"main\" ]; then hunt stop; else hunt workon $(git rev-parse --abbrev-ref HEAD); fi"
     chb = ! git checkout -b $1 && hash hunt 2>/dev/null && read -er -p 'Estimate '$1' (hrs): ' estimate && hunt --silent workon --create --estimate ${estimate:-0}
     ch = "!git checkout $1 && hash hunt 2>/dev/null && if [ \"$(git rev-parse --abbrev-ref HEAD)\" = \"master\" ]; then hunt --silent stop; else hunt --silent workon --create $(git rev-parse --abbrev-ref HEAD); fi && echo 1>/dev/null"
     chm = ! git checkout master && hash hunt 2>/dev/null && hunt --silent stop

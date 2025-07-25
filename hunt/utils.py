@@ -49,9 +49,9 @@ seconds = minutes
 """
         )
 
-    def visit_task(self, task, children):
+    def visit_task(self, node, visited_children):
         (name, _nl1, estimate, _nl2, status, _nl3, description, _nl4, history, _nl5) = (
-            children
+            visited_children
         )
         return {
             "name": name,
@@ -61,53 +61,53 @@ seconds = minutes
             "status": status,
         }
 
-    def visit_name(self, name, children):
-        (_name, _ws1, phrase, _ws2) = children
+    def visit_name(self, node, visited_children):
+        (_name, _ws1, phrase, _ws2) = visited_children
         return phrase
 
-    def visit_estimate(self, estimate, children):
-        (_est, _ws1, phrase, _ws2) = children
+    def visit_estimate(self, node, visited_children):
+        (_est, _ws1, phrase, _ws2) = visited_children
         return int(phrase) if phrase.isdigit() else None
 
-    def visit_description(self, description, children):
-        (_desc, _ws1, phrase, _ws2) = children
+    def visit_description(self, node, visited_children):
+        (_desc, _ws1, phrase, _ws2) = visited_children
         return None if phrase == "None" else phrase
 
-    def visit_status(self, status, children):
-        (_status, _ws1, status_type, _ws2) = children
+    def visit_status(self, node, visited_children):
+        (_status, _ws1, status_type, _ws2) = visited_children
         return status_type
 
-    def visit_status_type(self, node, _children):
-        return node.text
+    def visit_status_type(self, node, visited_children):
+        return Status(node.text)
 
-    def visit_history(self, history, children):
-        (_ws1, _hist, _ws2, _nl, history_records) = children
+    def visit_history(self, node, visited_children):
+        (_ws1, _hist, _ws2, _nl, history_records) = visited_children
         return history_records
 
-    def visit_history_records(self, history_records, children):
-        (history_record, rest) = children
+    def visit_history_records(self, node, visited_children):
+        (history_record, rest) = visited_children
         records = [history_record]
         records.extend(rest)
         return records
 
-    def visit_history_record(self, history_record, children):
-        (history_record_type, _ws1, history_time, _ws2) = children
+    def visit_history_record(self, node, visited_children):
+        (history_record_type, _ws1, history_time, _ws2) = visited_children
         return (history_record_type, history_time)
 
-    def visit_next_history_record(self, node, children):
-        (_nl, history_record) = children
+    def visit_next_history_record(self, node, visited_children):
+        (_nl, history_record) = visited_children
         return history_record
 
-    def visit_history_record_type(self, history_record_type, _children):
-        return history_record_type.text == "Start"
+    def visit_history_record_type(self, node, visited_children):
+        return node.text == "Start"
 
-    def visit_time(self, time, _children):
-        return calendar.timegm(strptime(time.text, TIME_FORMAT))
+    def visit_time(self, node, visited_children):
+        return calendar.timegm(strptime(node.text, TIME_FORMAT))
 
-    def visit_phrase(self, phrase, children):
-        return phrase.text
+    def visit_phrase(self, node, visited_children):
+        return node.text
 
-    def visit_int(self, node, children):
+    def visit_int(self, node, visited_children):
         return node.text
 
     def generic_visit(self, node, visited_children):

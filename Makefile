@@ -7,11 +7,11 @@ help:
 
 .PHONY: develop
 develop:
-	python3 setup.py develop
+	python setup.py develop
 
 .PHONY: install
-develop:
-	python3 setup.py install
+install:
+	python setup.py install
 
 .PHONY: clean
 clean:

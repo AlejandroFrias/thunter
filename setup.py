@@ -13,8 +13,8 @@ setup(
     name="hunt",
     version="1.0.0",
     author="Alejandro Frias",
-    author_email="alejandro.frias@ymail.com",
-    description="A CLI TODO list w/ time tracking.",
+    author_email="joker454@gmail.com",
+    description="A CLI To Do list w/ time tracking.",
     long_description=long_description,
     url="https://github.com/AlejandroFrias/hunt",
     license="MIT",
@@ -22,7 +22,6 @@ setup(
     include_package_data=True,
     zip_safe=False,
     classifiers=[
-        "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Environment :: Console",
         "License :: OSI Approved :: MIT License",

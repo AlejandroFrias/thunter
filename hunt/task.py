@@ -16,9 +16,7 @@ from constants import (
     Status,
     TASKS_TABLE,
 )
-from utils import calc_progress
-from utils import needs_init
-from utils import display_time
+from utils import calc_progress, needs_init, display_time
 
 
 def now():
@@ -82,16 +80,17 @@ class Task(NamedTuple):  # TODO named tuple!
 
 
 @total_ordering
-class TaskHistory(object):
-    def __init__(self, record):
-        self.id = record[0]
-        self.taskid = record[1]
-        self.is_start = record[2]
-        self.time = record[3]
+class TaskHistory(NamedTuple):
+    id: int
+    taskid: int
+    is_start: bool
+    time: int
 
     @classmethod
-    def from_record(cls, record):
-        return cls(record)
+    def from_record(cls, record: tuple[int, int, bool, int]):
+        return cls(
+            id=record[0], taskid=record[1], is_start=bool(record[2]), time=record[3]
+        )
 
     def get_time_display(self):
         return display_time(self.time)
@@ -182,18 +181,24 @@ class TaskHunter:
         lines = []
         lines.append("NAME: %s" % task.name)
         lines.append("ESTIMATE: %s" % task.estimate)
-        lines.append("STATUS: %s" % task.status)
+        lines.append("STATUS: %s" % task.status.value)
         lines.append("DESCRIPTION: %s" % task.description)
         lines.append("")
         lines.append("HISTORY")
         for history_record in task_history:
             record_type = "Start" if history_record.is_start else "Stop"
             lines.append(record_type + "\t" + history_record.get_time_display())
-        return "\n".join(lines)
+        return "\n".join(lines + [""])
 
-    def create_task(self, name, estimate=None, description=None):
+    def create_task(
+        self,
+        name: str,
+        estimate: Optional[int] = None,
+        description: Optional[str] = None,
+        status: Status = Status.TODO,
+    ) -> Task:
         new_task_id = self.insert_task(
-            name, estimate, description, status=Status.TODO, last_modified=now()
+            name, estimate, description, status, last_modified=now()
         )
         return self.get_task(new_task_id)
 
@@ -257,16 +262,16 @@ class TaskHunter:
         if current_task:
             if current_task.id == task.id:
                 return
-            self.insert_history(TaskHistory((None, current_task.id, False, now())))
+            self.insert_history(taskid=current_task.id, is_start=False, time=now())
             self.update_task(current_task.id, "status", Status.IN_PROGRESS.value)
-        self.insert_history(TaskHistory((None, task.id, True, now())))
+        self.insert_history(taskid=task.id, is_start=True, time=now())
         self.update_task(task.id, "status", Status.CURRENT.value)
 
     def stop_current_task(self) -> Optional[Task]:
         current_task = self.get_current_task()
         if not current_task:
             return
-        self.insert_history(TaskHistory((None, current_task.id, False, now())))
+        self.insert_history(taskid=current_task.id, is_start=False, time=now())
         self.update_task(current_task.id, "status", Status.IN_PROGRESS.value)
         return self.get_task(current_task.id)
 
@@ -350,11 +355,11 @@ class TaskHunter:
                 raise AssertionError(f"Could not insert task: {name}")
         return new_task_id
 
-    def insert_history(self, history):
+    def insert_history(self, taskid: int, is_start: bool, time: int):
         sql = ("INSERT INTO {table} (taskid,is_start,time) VALUES " "(?,?,?)").format(
             table=HISTORY_TABLE
         )
-        self.execute(sql, (history.taskid, history.is_start, history.time))
+        self.execute(sql, (taskid, is_start, time))
 
     def execute(self, sql, sql_params=None):
         if sql_params is None:

@@ -308,21 +308,14 @@ def workon(
             statuses=set([Status.CURRENT, Status.IN_PROGRESS, Status.TODO]),
         )
     except HuntCouldNotFindTaskError:
-        if create:
+        if task_id_str and create:
             task = hunt.create_task(
-                task_id_str,
+                name=task_id_str,
                 estimate=estimate_hours,
                 description=description,
             )
         else:
             raise
-
-    if create and task.name != task_id:
-        task = hunt.create_task(
-            task_id_str,
-            estimate=estimate_hours,
-            description=description,
-        )
 
     hunt.workon_task(task.id)
     ls(open=True)
@@ -429,18 +422,22 @@ def edit(
 
         with open(tf.name, mode="r") as tf:
             tf.seek(0)
-            edit = tf.read()
+            updated_task_to_parse = tf.read()
 
-    task_dict = parse_task(edit)
+    parsed_task_data = parse_task(updated_task_to_parse)
     hunter.remove_task(task.id)
-    new_task = hunter.create_task(
-        task_dict["name"], task_dict["estimate"], task_dict["description"]
+    new_updated_task = hunter.create_task(
+        name=parsed_task_data["name"],
+        estimate=parsed_task_data["estimate"],
+        description=parsed_task_data["description"],
+        status=parsed_task_data["status"],
     )
-    hunter.update_task(new_task.id, "status", task_dict["status"])
-    for is_start, history_time in task_dict["history"]:
-        hunter.insert_history(TaskHistory((None, new_task.id, is_start, history_time)))
+    for is_start, history_time in parsed_task_data["history"]:
+        hunter.insert_history(
+            taskid=new_updated_task.id, is_start=is_start, time=history_time
+        )
 
-    ls(starts_with=new_task.name, all=True)
+    ls(starts_with=new_updated_task.name, all=True)
 
 
 @hunt_cli_app.command()
