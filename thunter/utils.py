@@ -5,8 +5,8 @@ from time import gmtime, strftime, strptime
 import calendar
 import time
 
-from hunt import settings
-from hunt.constants import HuntTaskValidationError, Status
+from thunter import settings
+from thunter.constants import HuntTaskValidationError, Status
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 

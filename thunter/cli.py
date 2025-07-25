@@ -14,10 +14,10 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from hunt import settings
-from hunt.constants import HuntError, HuntCouldNotFindTaskError, Status
-from hunt.task import TaskHistory, TaskHunter
-from hunt.utils import calc_progress, display_progress, needs_init, parse_task
+from thunter import settings
+from thunter.constants import HuntError, HuntCouldNotFindTaskError, Status
+from thunter.task import TaskHistory, TaskHunter
+from thunter.utils import calc_progress, display_progress, needs_init, parse_task
 
 hunt_cli_app = typer.Typer(no_args_is_help=True)
 

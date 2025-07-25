@@ -6,8 +6,8 @@ from contextlib import contextmanager
 from functools import total_ordering
 from typing import NamedTuple, Optional, Union
 
-import settings
-from hunt.constants import (
+from thunter import settings
+from thunter.constants import (
     HISTORY_TABLE,
     STATUS_ORDERING,
     HuntCouldNotFindTaskError,
@@ -16,7 +16,7 @@ from hunt.constants import (
     Status,
     TASKS_TABLE,
 )
-from hunt.utils import calc_progress, needs_init, display_time
+from thunter.utils import calc_progress, needs_init, display_time
 
 
 def now():
@@ -24,7 +24,7 @@ def now():
 
 
 @total_ordering
-class Task(NamedTuple):  # TODO named tuple!
+class Task(NamedTuple):
     id: int
     name: str
     estimate: Optional[int]

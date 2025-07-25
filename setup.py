@@ -10,7 +10,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name="hunt",
+    name="thunter",
     version="1.0.0",
     author="Alejandro Frias",
     author_email="joker454@gmail.com",
@@ -24,12 +24,11 @@ setup(
     classifiers=[
         "Intended Audience :: Developers",
         "Environment :: Console",
-        "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
     ],
     entry_points={
         "console_scripts": [
-            "hunt = hunt.cli:main",
+            "thunter = thunter.cli:main",
         ],
     },
     install_requires=[
