@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling >= 1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "thunter"
+version = "0.0.0"
+dependencies = ["typer", "rich", "parsimonious"]
+requires-python = ">= 3.9"
+authors = [{ name = "Alejandro Frias", email = "joker454@gmail.com" }]
+maintainers = [{ name = "Alejandro Frias", email = "joker454@gmail.com" }]
+description = "A CLI To Do list w/ time tracking."
+readme = "README.md"
+license = "MIT"
+keywords = ["cli", "todo", "task", "tracking"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Environment :: Console",
+    "Programming Language :: Python :: 3",
+]
+
+[project.scripts]
+thunter = "thunter.cli:main"
+
+[project.urls]
+Issues = "https://github.com/AlejandroFrias/thunter/issues"
+Source = "https://github.com/AlejandroFrias/thunter"

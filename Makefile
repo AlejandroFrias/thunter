@@ -19,10 +19,9 @@ develop:
 
 .PHONY: clean
 clean:
-	rm -fr ~/.hunt
+	rm -fr ~/.thunter
 	rm -fr hunt.egg-info/
-	rm -fr __pycache__/
-	find . -type f -name '*.pyc' -delete
+	rm -fr thunter/__pycache__/
 
 .PHONY: lint
 lint:
