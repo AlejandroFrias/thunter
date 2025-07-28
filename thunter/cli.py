@@ -203,9 +203,11 @@ def ls(
         )
         style = None
         if task.status == Status.CURRENT:
-            style = "green"
-        elif task.status == Status.IN_PROGRESS:
             style = "yellow"
+        elif task.status == Status.IN_PROGRESS:
+            style = "orange3"
+        elif task.status == Status.FINISHED:
+            style = "green"
         table.add_row(*row, style=style)
     console.print(table)
 
