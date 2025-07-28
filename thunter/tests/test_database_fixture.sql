@@ -5,6 +5,8 @@ INSERT INTO tasks VALUES(1,'a test task',4,NULL,'In Progress',1753732126);
 INSERT INTO tasks VALUES(2,'another great test task',4,NULL,'TODO',1753732059);
 INSERT INTO tasks VALUES(4,'a finished task',2,NULL,'Finished',1753732131);
 INSERT INTO tasks VALUES(5,'a long task',32,'A grand description!','Current',1753732155);
+INSERT INTO tasks VALUES(6,'identically named task',32,NULL,'TODO',1753732155);
+INSERT INTO tasks VALUES(7,'identically named task',32,NULL,'TODO',1753732155);
 CREATE TABLE history(id INTEGER PRIMARY KEY, taskid INTEGER, is_start BOOLEAN, time INTEGER);
 INSERT INTO history VALUES(3,1,1,1753732103);
 INSERT INTO history VALUES(4,1,0,1753732126);

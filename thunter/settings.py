@@ -19,4 +19,9 @@ DEBUG = environ.get("DEBUG", "false").lower() in ("true", "1", "yes", "y")
 
 def needs_init():
     """Checks if `thunter init` needs to be run to setup the environment."""
-    return not os.path.exists(THUNTER_DIR) or not os.path.exists(DATABASE)
+    return (
+        not THUNTER_DIR
+        or not DATABASE
+        or not os.path.exists(THUNTER_DIR)
+        or not os.path.exists(DATABASE)
+    )

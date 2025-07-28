@@ -35,32 +35,41 @@ class TaskHunter:
             self.database = settings.DATABASE
 
     def get_task(
-        self, task_identifier: Union[str, int], statuses: Optional[set[Status]] = None
+        self,
+        task_identifier: Optional[Union[str, int]] = None,
+        statuses: Optional[set[Status]] = None,
     ) -> Task:
+        """Fetch a task from the db by its identifier (name or id).
+        Defaults to returning the current task if no identifier is given.
+
+        Optionally filter by statuses in the search.
+
+        Raises:
+            ThunterCouldNotFindTaskError: If no task is found.
+            ThunterFoundMultipleTasksError: If multiple tasks match the identifier.
+
+        Returns:
+            Task: The task object that matches the identifier.
+        """
+        if not task_identifier:
+            current_task = self.get_current_task()
+            if not current_task:
+                raise ThunterCouldNotFindTaskError("No Current task found.")
+            return current_task
+
         params: list[str] = []
         if isinstance(task_identifier, int) or task_identifier.isdigit():
             where_clause = "id=?"
-            order_by = "last_modified DESC"
             params = [str(task_identifier)]
-        elif task_identifier == CURRENT_TASK_IDENTIFIER:
-            where_clause = None
-            order_by = "last_modified DESC"
-            params = []
-        elif task_identifier:
-            where_clause = "name LIKE ?"
-            order_by = "last_modified DESC"
-            params = [task_identifier + "%"]
         else:
-            raise AssertionError("No task identifier given.")
+            where_clause = "name LIKE ?"
+            params = [task_identifier + "%"]
 
         if statuses:
-            if where_clause:
-                where_clause += " AND status IN (" + ",".join(len(statuses) * "?") + ")"
-            else:
-                where_clause = "status IN (" + ",".join(len(statuses) * "?") + ")"
-
+            where_clause += " AND status IN (" + ",".join(len(statuses) * "?") + ")"
             params.extend(map(lambda s: s.value, statuses))
 
+        order_by: str = "last_modified DESC"
         tasks = self.select_from_task(
             where_clause=where_clause, order_by=order_by, params=params
         )
@@ -70,8 +79,6 @@ class TaskHunter:
                 f"Could not find task for identifier: [yellow]{task_identifier}[/yellow]"
             )
         elif len(tasks) > 1:
-            if task_identifier == CURRENT_TASK_IDENTIFIER:
-                return tasks[0]
             raise ThunterFoundMultipleTasksError(
                 f"Found multiple tasks for identifier: [yellow]{task_identifier}[/yellow]"
             )
