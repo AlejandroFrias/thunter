@@ -1,127 +1,30 @@
-from enum import Enum
+from contextlib import contextmanager
 import sqlite3
 import time
 from datetime import datetime
-from contextlib import contextmanager
-from functools import total_ordering
-from typing import NamedTuple, Optional, Union
-
+from typing import Optional, Union
 from thunter import settings
 from thunter.constants import (
     HISTORY_TABLE,
-    STATUS_ORDERING,
+    TASKS_TABLE,
+    Status,
     ThunterCouldNotFindTaskError,
     ThunterFoundMultipleTasksError,
     ThunterNotInitializedError,
-    Status,
-    TASKS_TABLE,
 )
-from thunter.utils import calc_progress, needs_init, display_time
+from thunter.models.task import Task
+from thunter.models.task_history_record import TaskHistoryRecord
 
 
 def now():
     return int(time.mktime(datetime.now().timetuple()))
 
 
-@total_ordering
-class Task(NamedTuple):
-    id: int
-    name: str
-    estimate: Optional[int]
-    description: Optional[str]
-    status: Status
-    last_modified: int
-
-    @classmethod
-    def from_record(
-        cls, record: tuple[int, str, Optional[int], Optional[str], str, int]
-    ):
-        return cls(
-            id=record[0],
-            name=record[1],
-            estimate=record[2],
-            description=record[3],
-            status=Status(record[4]),
-            last_modified=record[5],
-        )
-
-    @property
-    def last_modified_display(self):
-        return display_time(self.last_modified)
-
-    @property
-    def estimate_display(self):
-        estimate_display_str = ""
-        if self.estimate is not None:
-            estimate_display_str = "%d hr" % self.estimate
-            if self.estimate > 1:
-                estimate_display_str += "s"
-        return estimate_display_str
-
-    def __str__(self):
-        return "{name} ({status}): {desc}".format(
-            name=self.name, status=self.status, desc=self.description
-        )
-
-    def __repr__(self):
-        return str(self)
-
-    def __lt__(self, other):
-        return (STATUS_ORDERING.index(self.status.value), -self.last_modified) < (
-            STATUS_ORDERING.index(other.status.value),
-            -other.last_modified,
-        )
-
-    def __eq__(self, other):
-        return self.id == other.id
-
-    def __ne__(self, other):
-        return self.id != other.id
-
-
-@total_ordering
-class TaskHistory(NamedTuple):
-    id: int
-    taskid: int
-    is_start: bool
-    time: int
-
-    @classmethod
-    def from_record(cls, record: tuple[int, int, bool, int]):
-        return cls(
-            id=record[0], taskid=record[1], is_start=bool(record[2]), time=record[3]
-        )
-
-    def get_time_display(self):
-        return display_time(self.time)
-
-    def __str__(self):
-        return "{id} {verb} at {time}".format(
-            id=self.id,
-            verb=("Started" if self.is_start else "Stopped"),
-            time=self.get_time_display(),
-        )
-
-    def __repr__(self):
-        return str(self)
-
-    def __lt__(self, other):
-        return (self.taskid, self.time, not self.is_start) < (
-            other.taskid,
-            other.time,
-            not other.is_start,
-        )
-
-    def __eq__(self, other):
-        return self.id == other.id
-
-    def __ne__(self, other):
-        return self.id != other.id
-
-
 class TaskHunter:
+    """The tasks manager class for interacting with tasks and their time tracking history."""
+
     def __init__(self, database=None):
-        if not database and needs_init():
+        if not database and settings.needs_init():
             raise ThunterNotInitializedError(
                 "[red]Error[/red]: Run [bold]thunter init[/bold] to initialize task database"
             )
@@ -187,7 +90,7 @@ class TaskHunter:
         lines.append("HISTORY")
         for history_record in task_history:
             record_type = "Start" if history_record.is_start else "Stop"
-            lines.append(record_type + "\t" + history_record.get_time_display())
+            lines.append(record_type + "\t" + history_record.time_display)
         return "\n".join(lines + [""])
 
     def create_task(
@@ -242,7 +145,7 @@ class TaskHunter:
 
     def get_progress(self, taskid):
         history = self.get_history(taskid)
-        return calc_progress(history)
+        return TaskHistoryRecord.calc_progress(history)
 
     def get_current_task(self):
         current_tasks = self.select_from_task(
@@ -303,7 +206,7 @@ class TaskHunter:
     ):
         return list(
             map(
-                Task.from_record,
+                Task.from_db_record,
                 self.select_from_table(TASKS_TABLE, where_clause, order_by, params),
             )
         )
@@ -311,7 +214,7 @@ class TaskHunter:
     def select_from_history(self, where_clause=None, order_by=None, params=None):
         return list(
             map(
-                TaskHistory.from_record,
+                TaskHistoryRecord.from_db_record,
                 self.select_from_table(HISTORY_TABLE, where_clause, order_by, params),
             )
         )

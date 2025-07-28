@@ -1,4 +1,5 @@
 from enum import Enum
+from time import gmtime, strftime
 
 
 TASKS_TABLE = "tasks"
@@ -18,6 +19,13 @@ STATUS_ORDERING = [
     Status.TODO.value,
     Status.FINISHED.value,
 ]
+
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+
+def display_time(seconds: int) -> str:
+    """App-wide function for formatting and displaying times."""
+    return strftime(TIME_FORMAT, gmtime(seconds))
 
 
 class ThunterError(Exception):

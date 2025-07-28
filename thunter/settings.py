@@ -1,5 +1,6 @@
 from os import environ
 from os import path
+import os
 
 
 THUNTER_DIR = path.expanduser(environ.get("THUNTER_DIRECTORY", "~/.thunter"))
@@ -14,3 +15,8 @@ THUNTER_SILENT = environ.get("THUNTER_SILENT", "false").lower() in (
     "y",
 )
 DEBUG = environ.get("DEBUG", "false").lower() in ("true", "1", "yes", "y")
+
+
+def needs_init():
+    """Checks if `thunter init` needs to be run to setup the environment."""
+    return not os.path.exists(THUNTER_DIR) or not os.path.exists(DATABASE)

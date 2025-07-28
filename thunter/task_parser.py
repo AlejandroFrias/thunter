@@ -1,14 +1,8 @@
-import os
-
 from parsimonious import Grammar, NodeVisitor
 from time import gmtime, strftime, strptime
 import calendar
-import time
 
-from thunter import settings
-from thunter.constants import ThunterTaskValidationError, Status
-
-TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+from thunter.constants import TIME_FORMAT, ThunterTaskValidationError, Status
 
 
 class TaskVisitor(NodeVisitor):
@@ -165,33 +159,3 @@ def validate_task_dict(task_dict):
             )
             expect_start = not expect_start
             last_history_time = history_time
-
-
-def display_time(seconds: int) -> str:
-    return strftime(TIME_FORMAT, gmtime(seconds))
-
-
-def calc_progress(task_history):
-    progress = 0
-    start_time = None
-    for history_record in task_history:
-        if bool(history_record.is_start):
-            start_time = history_record.time
-        else:
-            progress += history_record.time - start_time
-            start_time = None
-    if task_history and start_time:
-        progress += int(time.time()) - start_time
-    return progress
-
-
-def display_progress(seconds):
-    minutes, seconds = divmod(seconds, 60)
-    hours, minutes = divmod(minutes, 60)
-    return "{0:02d}:{1:02d}:{2:02d}".format(hours, minutes, seconds)
-
-
-def needs_init():
-    return not os.path.exists(settings.THUNTER_DIR) or not os.path.exists(
-        settings.DATABASE
-    )

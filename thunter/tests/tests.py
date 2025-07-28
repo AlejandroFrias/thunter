@@ -4,12 +4,13 @@ import sqlite3
 import tempfile
 from unittest import TestCase
 
-import settings
-from thunter.task import TaskHunter
+from thunter import settings
+from thunter.task_hunter import TaskHunter
 
 
-class TestHunt(TestCase):
+class TestTaskHunter(TestCase):
     def setUp(self):
+        """Setup a temporary environment and database for testing."""
         thunter_dir = tempfile.mkdtemp()
         self.env = {
             "THUNTER_DIR": thunter_dir,
@@ -20,9 +21,10 @@ class TestHunt(TestCase):
         sqlite3.connect(self.env["DATABASE"])
 
     def tearDown(self):
+        """Remove the temporary environment and database after tests."""
         shutil.rmtree(self.env["THUNTER_DIR"])
 
-    def test_init(self):
+    def test_dunder_init(self):
         thunter = TaskHunter()
         self.assertEqual(thunter.database, self.env["DATABASE"])
 

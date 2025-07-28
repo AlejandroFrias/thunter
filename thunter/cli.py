@@ -16,8 +16,9 @@ from rich.table import Table
 
 from thunter import settings
 from thunter.constants import ThunterError, ThunterCouldNotFindTaskError, Status
-from thunter.task import TaskHunter
-from thunter.utils import calc_progress, display_progress, needs_init, parse_task
+from thunter.models.task_history_record import TaskHistoryRecord
+from thunter.task_hunter import TaskHunter
+from thunter.task_parser import parse_task
 
 thunter_cli_app = typer.Typer(
     no_args_is_help=True,
@@ -36,7 +37,7 @@ def init():
     The database file can be found in the THUNTER_DIRECTORY, defaults to ~/.thunter.
     """
     # check if db and thunter dir exist already exists
-    if not needs_init():
+    if not settings.needs_init():
         prompt = (
             f"Are you sure you want to re-initialize and lose all tracking info? [yN]"
         )
@@ -176,7 +177,7 @@ def ls(
         taskid2history[record.taskid].append(record)
     taskid2progress = defaultdict(int)
     for taskid, task_history in taskid2history.items():
-        taskid2progress[taskid] = calc_progress(task_history)
+        taskid2progress[taskid] = TaskHistoryRecord.calc_progress(task_history)
 
     # Pretty display in a table with colors
     table = Table(
@@ -192,7 +193,7 @@ def ls(
             str(task.id),
             task.name,
             task.estimate_display,
-            display_progress(taskid2progress[task.id]),
+            TaskHistoryRecord.display_progress(taskid2progress[task.id]),
             task.status.value,
         )
         style = None
