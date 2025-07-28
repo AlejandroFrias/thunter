@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Optional, Union
 from thunter import settings
 from thunter.constants import (
+    CURRENT_TASK_IDENTIFIER,
     HISTORY_TABLE,
     TASKS_TABLE,
     Status,
@@ -41,7 +42,7 @@ class TaskHunter:
             where_clause = "id=?"
             order_by = "last_modified DESC"
             params = [str(task_identifier)]
-        elif task_identifier == "$CURRENT":
+        elif task_identifier == CURRENT_TASK_IDENTIFIER:
             where_clause = None
             order_by = "last_modified DESC"
             params = []
@@ -69,7 +70,7 @@ class TaskHunter:
                 f"Could not find task for identifier: [yellow]{task_identifier}[/yellow]"
             )
         elif len(tasks) > 1:
-            if task_identifier == "$CURRENT":
+            if task_identifier == CURRENT_TASK_IDENTIFIER:
                 return tasks[0]
             raise ThunterFoundMultipleTasksError(
                 f"Found multiple tasks for identifier: [yellow]{task_identifier}[/yellow]"

@@ -5,6 +5,8 @@ from time import gmtime, strftime
 TASKS_TABLE = "tasks"
 HISTORY_TABLE = "history"
 
+CURRENT_TASK_IDENTIFIER = "$CURRENT"
+
 
 class Status(Enum):
     CURRENT = "Current"

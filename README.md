@@ -112,5 +112,7 @@ pip install -e thunter/
 
 ### Run tests
 
-TODO:
-- [ ] pytest unittests for the core logic
+Dump local database to create new test database fixture
+```
+sqlite3 ~/.thunter/thunter_database.db .dump > thunter/tests/test_database_dump.sql
+```

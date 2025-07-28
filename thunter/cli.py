@@ -15,7 +15,12 @@ from rich.console import Console
 from rich.table import Table
 
 from thunter import settings
-from thunter.constants import ThunterError, ThunterCouldNotFindTaskError, Status
+from thunter.constants import (
+    CURRENT_TASK_IDENTIFIER,
+    ThunterError,
+    ThunterCouldNotFindTaskError,
+    Status,
+)
 from thunter.models.task_history_record import TaskHistoryRecord
 from thunter.task_hunter import TaskHunter
 from thunter.task_parser import parse_task
@@ -283,7 +288,7 @@ def workon(
     task_id_str = " ".join(task_id) if task_id else None
     try:
         task = hunter.get_task(
-            task_id_str or "$CURRENT",
+            task_id_str or CURRENT_TASK_IDENTIFIER,
             statuses=set([Status.CURRENT, Status.IN_PROGRESS, Status.TODO]),
         )
     except ThunterCouldNotFindTaskError:
