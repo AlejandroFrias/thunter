@@ -119,20 +119,20 @@ class TaskHunter:
         starts_with: Optional[str] = None,
         contains: Optional[str] = None,
     ) -> list[Task]:
-        where_clause_param_tuples = []
+        where_clause_param_pairs = []
         if starts_with:
-            where_clause_param_tuples.append(("name LIKE ?", (starts_with + "%",)))
+            where_clause_param_pairs.append(("name LIKE ?", (starts_with + "%",)))
         if contains:
-            where_clause_param_tuples.append(("name LIKE ?", ("%" + contains + "%",)))
+            where_clause_param_pairs.append(("name LIKE ?", ("%" + contains + "%",)))
         if statuses:
-            where_clause_param_tuples.append(
+            where_clause_param_pairs.append(
                 (
                     "status IN (" + ",".join(len(statuses) * "?") + ")",
                     map(lambda s: s.value, statuses),
                 )
             )
-        if where_clause_param_tuples:
-            where_clauses, where_params = zip(*where_clause_param_tuples)
+        if where_clause_param_pairs:
+            where_clauses, where_params = zip(*where_clause_param_pairs)
             where_clause = " AND ".join(where_clauses)
             params = [param for params in where_params for param in params]
         else:

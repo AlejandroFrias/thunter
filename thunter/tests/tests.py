@@ -123,3 +123,30 @@ class TestTaskHunter(TestCase):
         # Verify the task was added to the database
         fetched_task = self.thunter.get_task(new_task.id)
         self.assertEqual(fetched_task, new_task)
+
+    def test_get_tasks(self):
+        tasks = self.thunter.get_tasks()
+        self.assertEqual(len(tasks), 6)
+        self.assertIn("a test task", [task.name for task in tasks])
+        self.assertIn("a finished task", [task.name for task in tasks])
+        self.assertIn("a long task", [task.name for task in tasks])
+
+        starts_with_a_tasks = self.thunter.get_tasks(starts_with="a")
+        self.assertEqual(len(starts_with_a_tasks), 4)
+        self.assertIn("a test task", [task.name for task in starts_with_a_tasks])
+        self.assertIn("a finished task", [task.name for task in starts_with_a_tasks])
+
+        contains_great_task = self.thunter.get_tasks(contains="great")
+        self.assertEqual(len(contains_great_task), 1)
+        self.assertEqual(contains_great_task[0].name, "another great test task")
+
+        todo_tasks = self.thunter.get_tasks(statuses={Status.TODO})
+        self.assertEqual(len(todo_tasks), 3)
+        self.assertEqual(
+            [
+                "another great test task",
+                "identically named task",
+                "identically named task",
+            ],
+            sorted([task.name for task in todo_tasks]),
+        )
