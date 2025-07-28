@@ -19,7 +19,10 @@ from thunter.constants import ThunterError, ThunterCouldNotFindTaskError, Status
 from thunter.task import TaskHunter
 from thunter.utils import calc_progress, display_progress, needs_init, parse_task
 
-thunter_cli_app = typer.Typer(no_args_is_help=True)
+thunter_cli_app = typer.Typer(
+    no_args_is_help=True,
+    help="Thunter CLI - Task Hunter for tracking time spent on your to-do list.",
+)
 
 console = Console()
 if settings.THUNTER_SILENT:
@@ -445,6 +448,7 @@ def rm(
 
 
 def main(silent: bool = False):
+    """THunter - you task hunter, tracking time spent on your TODO list!"""
     try:
         thunter_cli_app()
     except KeyboardInterrupt:
