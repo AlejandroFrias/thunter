@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from functools import total_ordering
 from typing import NamedTuple
 
@@ -13,7 +14,8 @@ TaskIdentifier = int | str
 
 
 @total_ordering
-class Task(NamedTuple):
+@dataclass
+class Task:
     """Represents a task in the THunter application."""
 
     id: int
@@ -46,14 +48,6 @@ class Task(NamedTuple):
             if self.estimate > 1:
                 estimate_display_str += "s"
         return estimate_display_str
-
-    def __str__(self):
-        return "{name} ({status}): {desc}".format(
-            name=self.name, status=self.status, desc=self.description
-        )
-
-    def __repr__(self):
-        return str(self)
 
     def __lt__(self, other):
         return (STATUS_ORDERING.index(self.status.value), -self.last_modified) < (

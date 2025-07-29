@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from time import time
 from functools import total_ordering
 from typing import NamedTuple
@@ -6,7 +7,8 @@ from thunter.constants import display_time
 
 
 @total_ordering
-class TaskHistoryRecord(NamedTuple):
+@dataclass
+class TaskHistoryRecord:
     """Represents a task history record, used to track time spent working on the task."""
 
     id: int
@@ -52,9 +54,6 @@ class TaskHistoryRecord(NamedTuple):
             verb=("Started" if self.is_start else "Stopped"),
             time=self.time_display,
         )
-
-    def __repr__(self):
-        return str(self)
 
     def __lt__(self, other):
         return (self.taskid, self.time, not self.is_start) < (
