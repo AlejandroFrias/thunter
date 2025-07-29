@@ -1,5 +1,5 @@
 from functools import total_ordering
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 from thunter.constants import (
     STATUS_ORDERING,
@@ -8,21 +8,23 @@ from thunter.constants import (
 )
 
 
+# task identifiers can be their ID or their name
+TaskIdentifier = int | str
+
+
 @total_ordering
 class Task(NamedTuple):
     """Represents a task in the THunter application."""
 
     id: int
     name: str
-    estimate: Optional[int]
-    description: Optional[str]
+    estimate: int | None
+    description: str | None
     status: Status
     last_modified: int
 
     @classmethod
-    def from_db_record(
-        cls, record: tuple[int, str, Optional[int], Optional[str], str, int]
-    ):
+    def from_db_record(cls, record: tuple[int, str, int | None, str | None, str, int]):
         return cls(
             id=record[0],
             name=record[1],

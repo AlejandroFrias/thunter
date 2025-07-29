@@ -5,7 +5,6 @@ import tempfile
 from collections import defaultdict
 from subprocess import call
 from io import StringIO
-from typing import Optional
 from typing_extensions import Annotated
 
 import sqlite3
@@ -16,7 +15,6 @@ from rich.table import Table
 
 from thunter import settings
 from thunter.constants import (
-    CURRENT_TASK_IDENTIFIER,
     ThunterError,
     ThunterCouldNotFindTaskError,
     Status,
@@ -67,7 +65,7 @@ def init():
 @thunter_cli_app.command()
 def ls(
     all: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option(
             "--all",
             "-a",
@@ -76,7 +74,7 @@ def ls(
         ),
     ] = None,
     open: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option(
             "--open",
             "-o",
@@ -85,7 +83,7 @@ def ls(
         ),
     ] = None,
     started: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option(
             "--started",
             "-s",
@@ -94,7 +92,7 @@ def ls(
         ),
     ] = None,
     current: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option(
             "--current",
             "-c",
@@ -103,7 +101,7 @@ def ls(
         ),
     ] = None,
     in_progress: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option(
             "--in-progress",
             "-i",
@@ -112,7 +110,7 @@ def ls(
         ),
     ] = None,
     todo: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option(
             "--todo",
             "-t",
@@ -121,7 +119,7 @@ def ls(
         ),
     ] = None,
     finished: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option(
             "--finished",
             "-f",
@@ -130,7 +128,7 @@ def ls(
         ),
     ] = None,
     starts_with: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--starts-with",
             "-S",
@@ -139,7 +137,7 @@ def ls(
         ),
     ] = None,
     contains: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--contains",
             "-C",
@@ -213,7 +211,7 @@ def ls(
 
 
 @thunter_cli_app.command()
-def show(task_id: Annotated[Optional[str], typer.Argument()] = None):
+def show(task_id: Annotated[str | None, typer.Argument()] = None):
     """Display task. Defaults to the currently active task if there is one."""
     hunter = TaskHunter()
     if task_id:
@@ -230,7 +228,7 @@ def show(task_id: Annotated[Optional[str], typer.Argument()] = None):
 def create(
     task_id: Annotated[list[str], typer.Argument()],
     estimate: Annotated[
-        Optional[int],
+        int | None,
         typer.Option(
             "--estimate",
             "-e",
@@ -240,7 +238,7 @@ def create(
         ),
     ] = None,
     description: Annotated[
-        Optional[str], typer.Option("--description", "-d", help="Add a description")
+        str | None, typer.Option("--description", "-d", help="Add a description")
     ] = None,
 ):
     """Create a new task."""
@@ -255,9 +253,9 @@ def create(
 
 @thunter_cli_app.command()
 def workon(
-    task_id: Annotated[Optional[list[str]], typer.Argument()] = None,
+    task_id: Annotated[list[str] | None, typer.Argument()] = None,
     create: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option(
             "--create",
             "-c",
@@ -266,7 +264,7 @@ def workon(
         ),
     ] = None,
     estimate_hours: Annotated[
-        Optional[int],
+        int | None,
         typer.Option(
             "--estimate",
             "-e",
@@ -276,7 +274,7 @@ def workon(
         ),
     ] = None,
     description: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--description",
             "-d",
@@ -290,7 +288,7 @@ def workon(
     task_id_str = " ".join(task_id) if task_id else None
     try:
         task = hunter.get_task(
-            task_id_str or CURRENT_TASK_IDENTIFIER,
+            task_identifier=task_id_str,
             statuses=set([Status.CURRENT, Status.IN_PROGRESS, Status.TODO]),
         )
     except ThunterCouldNotFindTaskError:
@@ -329,7 +327,7 @@ def stop():
 
 
 @thunter_cli_app.command()
-def finish(task_id: Annotated[Optional[str], typer.Argument()] = None):
+def finish(task_id: Annotated[str | None, typer.Argument()] = None):
     """Finish a task (defaults to finish current task)."""
     hunter = TaskHunter()
     task = None
@@ -350,7 +348,7 @@ def finish(task_id: Annotated[Optional[str], typer.Argument()] = None):
 def estimate(
     estimate: Annotated[int, typer.Argument()],
     task_identifier: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--task-identifier",
             "-t",
@@ -383,7 +381,7 @@ def estimate(
 @thunter_cli_app.command()
 def edit(
     task_identifier: Annotated[
-        Optional[str],
+        str | None,
         typer.Argument(
             help="Task ID or name to edit. Defaults to editing the CURRENT task.",
             show_default=False,

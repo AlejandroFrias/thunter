@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "thunter"
 version = "0.0.0"
 dependencies = ["typer", "rich", "parsimonious"]
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 authors = [{ name = "Alejandro Frias", email = "joker454@gmail.com" }]
 maintainers = [{ name = "Alejandro Frias", email = "joker454@gmail.com" }]
 description = "A CLI To Do list w/ time tracking."

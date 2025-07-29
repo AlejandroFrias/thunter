@@ -7,7 +7,6 @@ from unittest import TestCase
 
 from thunter import settings
 from thunter.constants import (
-    CURRENT_TASK_IDENTIFIER,
     Status,
     ThunterCouldNotFindTaskError,
     ThunterFoundMultipleTasksError,
@@ -150,3 +149,42 @@ class TestTaskHunter(TestCase):
             ],
             sorted([task.name for task in todo_tasks]),
         )
+
+    def test_workon_task(self):
+        current_task = self.thunter.get_task()
+        self.assertEqual(current_task.name, "a long task")
+        self.assertEqual(current_task.status, Status.CURRENT)
+        current_task_history = self.thunter.get_history([current_task.id])
+
+        next_task = self.thunter.get_task(task_identifier="a test task")
+        next_task_history = self.thunter.get_history([next_task.id])
+
+        # Start working on the next task
+        self.thunter.workon_task(next_task.id)
+
+        new_current_task = self.thunter.get_task()
+        self.assertEqual(new_current_task, next_task)
+
+        previously_current_task = self.thunter.get_task(current_task.id)
+        previously_current_task_history = self.thunter.get_history(
+            [previously_current_task.id]
+        )
+        new_current_task_history = self.thunter.get_history([new_current_task.id])
+
+        self.assertEqual(len(new_current_task_history), len(next_task_history) + 1)
+        self.assertEqual(
+            len(previously_current_task_history), len(current_task_history) + 1
+        )
+        self.assertEqual(new_current_task.status, Status.CURRENT)
+        self.assertEqual(previously_current_task.status, Status.IN_PROGRESS)
+
+        # Already working on this task, should be a no-op
+        self.thunter.workon_task(1)
+
+        unchanged_current_task = self.thunter.get_task()
+        unchanged_current_task_history = self.thunter.get_history(
+            [unchanged_current_task.id]
+        )
+        self.assertEqual(unchanged_current_task, new_current_task)
+        self.assertEqual(unchanged_current_task.status, new_current_task.status)
+        self.assertEqual(unchanged_current_task_history, new_current_task_history)

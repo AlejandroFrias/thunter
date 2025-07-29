@@ -2,10 +2,9 @@ from enum import Enum
 from time import gmtime, strftime
 
 
-TASKS_TABLE = "tasks"
-HISTORY_TABLE = "history"
-
-CURRENT_TASK_IDENTIFIER = "$CURRENT"
+class TableName(Enum):
+    TASKS = "tasks"
+    HISTORY = "history"
 
 
 class Status(Enum):
