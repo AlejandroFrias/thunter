@@ -10,8 +10,7 @@ from thunter.constants import (
     ThunterFoundMultipleTasksError,
     ThunterNotInitializedError,
 )
-from thunter.models.task import Task, TaskIdentifier
-from thunter.models.task_history_record import TaskHistoryRecord
+from thunter.models import Task, TaskHistoryRecord, TaskIdentifier
 
 
 def now():

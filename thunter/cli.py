@@ -19,7 +19,7 @@ from thunter.constants import (
     ThunterCouldNotFindTaskError,
     Status,
 )
-from thunter.models.task_history_record import TaskHistoryRecord
+from thunter.models import TaskHistoryRecord
 from thunter.task_hunter import TaskHunter
 from thunter.task_parser import parse_task
 

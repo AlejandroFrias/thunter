@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from thunter.constants import Status
-from thunter.models.task import Task
+from thunter.models import Task
 
 
 class TestTask(TestCase):
