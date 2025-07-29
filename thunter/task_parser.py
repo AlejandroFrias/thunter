@@ -1,8 +1,26 @@
+from dataclasses import dataclass
+from typing import TypeGuard
 from parsimonious import Grammar, NodeVisitor
-from time import gmtime, strftime, strptime
+from time import strptime
 import calendar
 
 from thunter.constants import TIME_FORMAT, ThunterTaskValidationError, Status
+from thunter.models import Task, TaskHistoryRecord
+
+
+@dataclass
+class ParsedTaskHistoryRecord:
+    is_start: bool
+    time: int
+
+
+@dataclass
+class ParsedTaskData:
+    name: str
+    estimate: int | None
+    description: str | None
+    status: Status
+    history: list[ParsedTaskHistoryRecord]
 
 
 class TaskVisitor(NodeVisitor):
@@ -10,50 +28,55 @@ class TaskVisitor(NodeVisitor):
 
     def __init__(self):
         super().__init__()
+        print("Initializing TaskVisitor")
         self.grammar = Grammar(
-            """
-task = name newline+
-        estimate newline+
-        status newline+
-        description newline+
-        history newline*
+            r"""task = name newline+
+estimate newline+
+status newline+
+description newline+
+history newline*
 name = "NAME:" whitespace? phrase whitespace?
 estimate = "ESTIMATE:" whitespace? int whitespace?
 description = "DESCRIPTION:" whitespace? phrase whitespace?
 status = "STATUS:" whitespace? status_type whitespace?
 status_type = "Current" / "TODO" / "In Progress" / "Finished"
-history = whitespace? "HISTORY" whitespace? newline+
-            history_records?
-whitespace = ~"[ \\t]+"
-newline = "\\n" / "\\n\\r"
+history = whitespace? "HISTORY" whitespace? newline+ history_records?
+whitespace = ~"[ \t]+"
+newline = "\n" / "\n\r"
 phrase = word (whitespace word)*
 word = ~"[0-9a-zA-Z.!?&-_]+"
-int = ~"[1-9]\\d*" / "None"
+int = ~"[1-9][0-9]*" / "None"
 history_records = history_record (next_history_record)*
 history_record = history_record_type whitespace time whitespace?
 next_history_record = newline+ history_record
 history_record_type = "Start" / "Stop"
 time = year "-" month "-" day " " hours ":" minutes ":" seconds
-year = ~"20\\d{2}"
+year = ~"20[0-9]{2}"
 month = ~"0[1-9]" / ~"1[0-2]"
-day = ~"0[1-9]" / ~"1\\d" / ~"2\\d" / ~"3[0-1]"
-hours = ~"0\\d" / ~"1\\d" / ~"2[0-3]"
-minutes = ~"[0-5]\\d"
+day = ~"0[1-9]" / ~"1[0-9]" / ~"2[0-9]" / ~"3[0-1]"
+hours = ~"0[0-9]" / ~"1[0-9]" / ~"2[0-3]"
+minutes = ~"[0-5][0-9]"
 seconds = minutes
 """
         )
+        print("Initialized TaskVisitor")
 
-    def visit_task(self, node, visited_children):
+    def visit_task(self, node, visited_children) -> ParsedTaskData:
         (name, _nl1, estimate, _nl2, status, _nl3, description, _nl4, history, _nl5) = (
             visited_children
         )
-        return {
-            "name": name,
-            "estimate": estimate,
-            "description": description,
-            "history": history[0] if history else history,
-            "status": status,
-        }
+        task_data = ParsedTaskData(
+            name=name,
+            estimate=estimate,
+            description=description,
+            status=status,
+            history=[
+                ParsedTaskHistoryRecord(is_start=is_start, time=history_time)
+                for is_start, history_time in history
+            ],
+        )
+        validate_task_data(task_data)
+        return task_data
 
     def visit_name(self, node, visited_children):
         (_name, _ws1, phrase, _ws2) = visited_children
@@ -76,7 +99,7 @@ seconds = minutes
 
     def visit_history(self, node, visited_children):
         (_ws1, _hist, _ws2, _nl, history_records) = visited_children
-        return history_records
+        return history_records[0] if history_records else []
 
     def visit_history_records(self, node, visited_children):
         (history_record, rest) = visited_children
@@ -108,10 +131,10 @@ seconds = minutes
         return visited_children
 
 
-def parse_task(task_display):
-    task_dict = TaskVisitor().parse(task_display)
-    validate_task_dict(task_dict)
-    return task_dict
+def parse_task_display(task_display: str) -> ParsedTaskData:
+    """Parses a task's display string into the data necessary to create the task and it's history"""
+    task_data = TaskVisitor().parse(task_display)
+    return task_data
 
 
 def thunter_assert(expr, message):
@@ -120,42 +143,55 @@ def thunter_assert(expr, message):
         raise ThunterTaskValidationError(error_message)
 
 
-def validate_task_dict(task_dict):
-    if task_dict["status"] == Status.TODO:
+def validate_task_data(task_data: ParsedTaskData) -> None:
+    if task_data.status == Status.TODO:
         thunter_assert(
-            len(task_dict["history"]) == 0, "Can't have a history if the status is TODO"
+            len(task_data.history) == 0, "Can't have a history if the status is TODO"
         )
     else:
         thunter_assert(
-            len(task_dict["history"]) > 0,
-            "Must have a history if status is %s" % task_dict["status"],
+            len(task_data.history) > 0,
+            "Must have a history if status is %s" % task_data.status,
         )
 
-    if task_dict["status"] == Status.CURRENT:
-        last_history_record = task_dict["history"][-1]
+    if task_data.status == Status.CURRENT:
+        last_history_record = task_data.history[-1]
         thunter_assert(
-            last_history_record[0] is True,
+            last_history_record.is_start,
             "Last history record must be a Start if the status is Current",
         )
-    elif task_dict["status"] in [Status.IN_PROGRESS, Status.FINISHED]:
-        last_history_record = task_dict["history"][-1]
+    elif task_data.status in [Status.IN_PROGRESS, Status.FINISHED]:
+        last_history_record = task_data.history[-1]
         thunter_assert(
-            last_history_record[0] is False,
-            "Last history record must be a Stop if the status is %s"
-            % task_dict["status"],
+            not last_history_record.is_start,
+            "Last history record must be a Stop if the status is %s" % task_data.status,
         )
 
-    if task_dict["history"]:
-        expect_start = True
-        last_history_time = 0
-        for is_start, history_time in task_dict["history"]:
-            thunter_assert(
-                last_history_time < history_time,
-                "History must be in ascending order by time",
-            )
-            thunter_assert(
-                is_start == expect_start,
-                "History must alternate between Start and Stop",
-            )
-            expect_start = not expect_start
-            last_history_time = history_time
+    expect_start = True
+    last_history_time = 0
+    for history_data in task_data.history:
+        thunter_assert(
+            last_history_time < history_data.time,
+            "History must be in ascending order by time",
+        )
+        thunter_assert(
+            history_data.is_start == expect_start,
+            "History must alternate between Start and Stop",
+        )
+        expect_start = not expect_start
+        last_history_time = history_data.time
+
+
+def display_task(task: Task, task_history: list[TaskHistoryRecord]) -> str:
+    """Displays a task in a human-readable and parser friendly format."""
+    lines = []
+    lines.append("NAME: %s" % task.name)
+    lines.append("ESTIMATE: %s" % task.estimate)
+    lines.append("STATUS: %s" % task.status.value)
+    lines.append("DESCRIPTION: %s" % task.description)
+    lines.append("")
+    lines.append("HISTORY")
+    for history_record in task_history:
+        record_type = "Start" if history_record.is_start else "Stop"
+        lines.append(record_type + "\t" + history_record.time_display)
+    return "\n".join(lines + [""])

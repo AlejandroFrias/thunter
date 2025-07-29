@@ -21,7 +21,7 @@ from thunter.constants import (
 )
 from thunter.models import TaskHistoryRecord
 from thunter.task_hunter import TaskHunter
-from thunter.task_parser import parse_task
+from thunter.task_parser import parse_task_display
 
 thunter_cli_app = typer.Typer(
     no_args_is_help=True,
@@ -408,17 +408,19 @@ def edit(
             tf.seek(0)
             updated_task_to_parse = tf.read()
 
-    parsed_task_data = parse_task(updated_task_to_parse)
+    parsed_task_data = parse_task_display(updated_task_to_parse)
     hunter.remove_task(task.id)
     new_updated_task = hunter.create_task(
-        name=parsed_task_data["name"],
-        estimate=parsed_task_data["estimate"],
-        description=parsed_task_data["description"],
-        status=parsed_task_data["status"],
+        name=parsed_task_data.name,
+        estimate=parsed_task_data.estimate,
+        description=parsed_task_data.description,
+        status=parsed_task_data.status,
     )
-    for is_start, history_time in parsed_task_data["history"]:
+    for history_data in parsed_task_data.history:
         hunter.insert_history(
-            taskid=new_updated_task.id, is_start=is_start, time=history_time
+            taskid=new_updated_task.id,
+            is_start=history_data.is_start,
+            time=history_data.time,
         )
 
     ls(starts_with=new_updated_task.name, all=True)

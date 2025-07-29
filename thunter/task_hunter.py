@@ -11,6 +11,7 @@ from thunter.constants import (
     ThunterNotInitializedError,
 )
 from thunter.models import Task, TaskHistoryRecord, TaskIdentifier
+from thunter.task_parser import display_task
 
 
 def now():
@@ -87,18 +88,7 @@ class TaskHunter:
         This representation is able to be parsed and is used by the edit command."""
         task = self.get_task(taskid)
         task_history = self.get_history([taskid])
-
-        lines = []
-        lines.append("NAME: %s" % task.name)
-        lines.append("ESTIMATE: %s" % task.estimate)
-        lines.append("STATUS: %s" % task.status.value)
-        lines.append("DESCRIPTION: %s" % task.description)
-        lines.append("")
-        lines.append("HISTORY")
-        for history_record in task_history:
-            record_type = "Start" if history_record.is_start else "Stop"
-            lines.append(record_type + "\t" + history_record.time_display)
-        return "\n".join(lines + [""])
+        return display_task(task=task, task_history=task_history)
 
     def create_task(
         self,
