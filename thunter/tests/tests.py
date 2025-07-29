@@ -188,3 +188,60 @@ class TestTaskHunter(TestCase):
         self.assertEqual(unchanged_current_task, new_current_task)
         self.assertEqual(unchanged_current_task.status, new_current_task.status)
         self.assertEqual(unchanged_current_task_history, new_current_task_history)
+
+    def test_stop_current_task(self):
+        current_task = self.thunter.get_current_task()
+        self.assertIsNotNone(current_task)
+        if current_task is None:
+            raise AssertionError
+
+        current_history = self.thunter.get_history([current_task.id])
+        self.assertEqual(current_task.status, Status.CURRENT)
+        self.assertEqual(len(current_history), 3)
+
+        stopped_task = self.thunter.stop_current_task()
+        if stopped_task is None:
+            raise AssertionError
+
+        self.assertEqual(stopped_task.id, current_task.id)
+        self.assertEqual(stopped_task.status, Status.IN_PROGRESS)
+
+        # Verify the task is no longer current
+        self.assertIsNone(self.thunter.get_current_task())
+
+        # Verify the task history was updated
+        stopped_history = self.thunter.get_history([stopped_task.id])
+        self.assertEqual(len(stopped_history), len(current_history) + 1)
+
+        # stopping the current task again should not change anything
+        self.assertIsNone(self.thunter.stop_current_task())
+
+    def test_update_finish_task(self):
+        current_task = self.thunter.get_task()
+        current_history = self.thunter.get_history([current_task.id])
+        self.assertEqual(current_task.status, Status.CURRENT)
+
+        self.thunter.finish_task(current_task.id)
+
+        finished_task = self.thunter.get_task(current_task.id)
+        self.assertEqual(finished_task.status, Status.FINISHED)
+
+        # Verify the task history was updated
+        finished_history = self.thunter.get_history([finished_task.id])
+        self.assertEqual(len(finished_history), len(current_history) + 1)
+
+    def test_estimate_task(self):
+        current_task = self.thunter.get_task()
+        current_history = self.thunter.get_history([current_task.id])
+        self.assertEqual(current_task.estimate, 32)
+
+        self.thunter.estimate_task(taskid=current_task.id, estimate=10)
+
+        updated_task = self.thunter.get_task(current_task.id)
+        self.assertEqual(updated_task.estimate, 10)
+
+    def test_remove_task(self):
+        current_task = self.thunter.get_task()
+        self.thunter.remove_task(current_task.id)
+        with self.assertRaises(ThunterCouldNotFindTaskError):
+            self.thunter.get_task(current_task.id)

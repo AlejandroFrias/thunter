@@ -200,8 +200,14 @@ class TaskHunter:
 
     def finish_task(self, taskid: int) -> None:
         """Mark a task as finished and update its status."""
-        # TODO: stop work on current task if it's the same one being finished
-        self.update_task_field(taskid, "status", Status.FINISHED.value)
+        task = self.get_task(taskid)
+        if task.status == Status.CURRENT:
+            self.insert_history(taskid=task.id, is_start=False, time=now())
+
+        if task.status != Status.FINISHED:
+            self.update_task_field(
+                taskid=task.id, field="status", value=Status.FINISHED.value
+            )
 
     def estimate_task(self, taskid: int, estimate: int) -> None:
         """(Re)set the estimate for a task."""
