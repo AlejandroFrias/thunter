@@ -62,10 +62,7 @@ def main_callback(
     state["silent"] = silent or settings.THUNTER_SILENT
     state["debug"] = debug or settings.DEBUG
     if ctx.invoked_subcommand != "init" and settings.needs_init():
-        thunter_print(
-            "THunter is not initialized. Please run 'thunter init' to set up the database."
-        )
-        raise typer.Exit()
+        init()
 
 
 @thunter_cli_app.command()
@@ -79,6 +76,7 @@ def init(
     The database file name can be set with THUNTER_DATABASE_NAME, defaults to 'database.db'.
     The database file can be found in the THUNTER_DIRECTORY, defaults to ~/.thunter.
     """
+    thunter_print("Initializing THunter...")
     if not settings.needs_init():
         prompt = "WARNING: Are you sure you want to re-initialize? You will lose all tasks and tracking info [yN]"
         user_sure = force or input(prompt).lower() == "y"
@@ -87,7 +85,7 @@ def init(
             raise typer.Exit()
         thunter_print(f"Deleting THunter directory: {settings.THUNTER_DIR}")
         shutil.rmtree(settings.THUNTER_DIR)
-    thunter_print(f"Recreating THunter directory: {settings.THUNTER_DIR}")
+    thunter_print(f"Creating THunter directory: {settings.THUNTER_DIR}")
     os.mkdir(settings.THUNTER_DIR)
     thunter_print(f"Creating sqlite database {settings.DATABASE}")
     conn = sqlite3.connect(settings.DATABASE)
@@ -102,7 +100,7 @@ def init(
 
     conn.commit()
     conn.close()
-    thunter_print("THunter initialized successfully! You can now start creating tasks.")
+    thunter_print("THunter initialized successfully!")
 
 
 @thunter_cli_app.command()
