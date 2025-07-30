@@ -15,6 +15,7 @@ from rich.table import Table
 
 from thunter import settings
 from thunter.constants import (
+    TableName,
     ThunterError,
     ThunterCouldNotFindTaskError,
     Status,
@@ -25,43 +26,85 @@ from thunter.task_parser import parse_task_display
 
 thunter_cli_app = typer.Typer(
     no_args_is_help=True,
-    help="Thunter CLI - Task Hunter for tracking time spent on your to-do list.",
 )
+state = {"silent": settings.THUNTER_SILENT, "debug": settings.DEBUG}
 
-console = Console()
-if settings.THUNTER_SILENT:
-    console = Console(file=StringIO())
+
+def thunter_print(*args, **kwargs):
+    """Prints to console if not in silent mode."""
+    if not settings.THUNTER_SILENT and not state["silent"]:
+        console = Console()
+        console.print(*args, **kwargs)
+
+
+@thunter_cli_app.callback()
+def main_callback(
+    ctx: typer.Context,
+    silent: Annotated[
+        bool,
+        typer.Option(
+            "--silent",
+            "--quite",
+            "-s",
+            help="Run thunter in silent mode, no output to console.",
+        ),
+    ] = False,
+    debug: Annotated[
+        bool,
+        typer.Option(
+            "--debug",
+            "-d",
+            help="Run thunter in debug mode, printing out full exceptions and traces.",
+        ),
+    ] = False,
+):
+    """THunter - your task hunter, tracking time spent on your TODO list!"""
+    state["silent"] = silent or settings.THUNTER_SILENT
+    state["debug"] = debug or settings.DEBUG
+    if ctx.invoked_subcommand != "init" and settings.needs_init():
+        thunter_print(
+            "THunter is not initialized. Please run 'thunter init' to set up the database."
+        )
+        raise typer.Exit()
 
 
 @thunter_cli_app.command()
-def init():
+def init(
+    force: Annotated[
+        bool, typer.Option("--force", "-f", help="Skip confirmation prompt")
+    ] = False,
+):
     """Initialize thunter sqlite database.
+
     The database file name can be set with THUNTER_DATABASE_NAME, defaults to 'database.db'.
     The database file can be found in the THUNTER_DIRECTORY, defaults to ~/.thunter.
     """
-    # check if db and thunter dir exist already exists
     if not settings.needs_init():
-        prompt = (
-            f"Are you sure you want to re-initialize and lose all tracking info? [yN]"
-        )
-        user_sure = input(prompt).lower() == "y"
+        prompt = "WARNING: Are you sure you want to re-initialize? You will lose all tasks and tracking info [yN]"
+        user_sure = force or input(prompt).lower() == "y"
         if not user_sure:
-            console.print("Aborting re-initialization")
-            return
+            thunter_print("Aborting re-initialization")
+            raise typer.Exit()
+        thunter_print(f"Deleting THunter directory: {settings.THUNTER_DIR}")
         shutil.rmtree(settings.THUNTER_DIR)
+    thunter_print(f"Recreating THunter directory: {settings.THUNTER_DIR}")
     os.mkdir(settings.THUNTER_DIR)
+    thunter_print(f"Creating sqlite database {settings.DATABASE}")
     conn = sqlite3.connect(settings.DATABASE)
-    conn.execute(
-        "CREATE TABLE tasks(id INTEGER PRIMARY KEY, name TEXT, estimate INTEGER, description TEXT, status TEXT, last_modified INTEGER)"
-    )
-    conn.execute(
-        "CREATE TABLE history(id INTEGER PRIMARY KEY, taskid INTEGER, is_start BOOLEAN, time INTEGER)"
-    )
+
+    thunter_print(f"Creating tables")
+    create_tasks_table_sql = f"CREATE TABLE {TableName.TASKS.value}(id INTEGER PRIMARY KEY, name TEXT, estimate INTEGER, description TEXT, status TEXT, last_modified INTEGER)"
+    thunter_print(create_tasks_table_sql)
+    conn.execute(create_tasks_table_sql)
+    create_history_table_sql = f"CREATE TABLE {TableName.HISTORY.value}(id INTEGER PRIMARY KEY, taskid INTEGER, is_start BOOLEAN, time INTEGER)"
+    thunter_print(create_history_table_sql)
+    conn.execute(create_history_table_sql)
+
     conn.commit()
     conn.close()
+    thunter_print("THunter initialized successfully! You can now start creating tasks.")
 
 
-# flake8: noqa
 @thunter_cli_app.command()
 def ls(
     all: Annotated[
@@ -207,7 +250,7 @@ def ls(
         elif task.status == Status.FINISHED:
             style = "green"
         table.add_row(*row, style=style)
-    console.print(table)
+    thunter_print(table)
 
 
 @thunter_cli_app.command()
@@ -219,9 +262,9 @@ def show(task_id: Annotated[str | None, typer.Argument()] = None):
     else:
         task = hunter.get_current_task()
         if not task:
-            console.print("No current task found.", style="red")
+            thunter_print("No current task found.", style="red")
             return
-    console.print(hunter.display_task(task.id))
+    thunter_print(hunter.display_task(task.id))
 
 
 @thunter_cli_app.command()
@@ -321,9 +364,9 @@ def stop():
     hunter = TaskHunter()
     stopped_task = hunter.stop_current_task()
     if not stopped_task:
-        console.print("No current task to stop.", style="yellow")
+        thunter_print("No current task to stop.", style="yellow")
     else:
-        console.print(f"Stopped working on [yellow]{stopped_task.name}[/yellow]!")
+        thunter_print(f"Stopped working on [yellow]{stopped_task.name}[/yellow]!")
 
 
 @thunter_cli_app.command()
@@ -337,11 +380,11 @@ def finish(task_id: Annotated[str | None, typer.Argument()] = None):
         task = hunter.stop_current_task()
 
     if not task:
-        console.print("No task to finish.", style="yellow")
+        thunter_print("No task to finish.", style="yellow")
         return
 
     hunter.finish_task(task.id)
-    console.print(f"Finished [green]{task.name}[/green]!")
+    thunter_print(f"Finished [green]{task.name}[/green]!")
 
 
 @thunter_cli_app.command()
@@ -365,15 +408,13 @@ def estimate(
         task = hunter.get_current_task()
 
     if not task:
-        console.print(
-            "No current task found to estimate. Use --task-identifier / -t to specify a task.",
-            style="red",
+        raise ThunterCouldNotFindTaskError(
+            "No current task found to estimate. Use --task-identifier / -t to specify a task."
         )
-        return
 
     hunter.estimate_task(task.id, estimate)
     task = hunter.get_task(task.id)
-    console.print(
+    thunter_print(
         f"[green]{task.name}[/green] estimated to take [yellow]{task.estimate_display}[/yellow]"
     )
 
@@ -396,7 +437,7 @@ def edit(
         task = hunter.get_current_task()
 
     if not task:
-        console.print("Could not find task '" + (task_identifier or "CURRENT") + "'")
+        thunter_print("Could not find task '" + (task_identifier or "CURRENT") + "'")
         return
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".tmp") as tf:
@@ -450,9 +491,9 @@ def rm(
 
     if user_is_sure:
         hunter.remove_task(task.id)
-        console.print(f"Removed [red]{task.name}[/red]!")
+        thunter_print(f"Removed [red]{task.name}[/red]!")
     else:
-        console.print(f"Didn't remove [yellow]{task.name}[/yellow].")
+        thunter_print(f"Didn't remove [yellow]{task.name}[/yellow].")
 
 
 def main(silent: bool = False):
@@ -462,7 +503,8 @@ def main(silent: bool = False):
     except KeyboardInterrupt:
         sys.exit(1)
     except ThunterError as thunter_error:
-        if settings.DEBUG:
+        console = Console()
+        if state["debug"]:
             console.print_exception(show_locals=True)
         console.print(str(thunter_error))
         sys.exit(thunter_error.exit_status)

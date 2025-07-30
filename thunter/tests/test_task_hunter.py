@@ -13,34 +13,22 @@ from thunter.constants import (
     ThunterNotInitializedError,
 )
 from thunter.task_hunter import TaskHunter
+from thunter.tests import setUpTestDatabase, tearDownTestDatabase
 
 
 class TestTaskHunter(TestCase):
 
     def setUp(self):
-        """Setup a temporary environment and database for testing."""
-        thunter_dir = tempfile.mkdtemp()
-        self.env = {
-            "THUNTER_DIR": thunter_dir,
-            "DATABASE": os.path.join(thunter_dir, "test_database.db"),
-        }
-        settings.THUNTER_DIR = self.env["THUNTER_DIR"]
-        settings.DATABASE = self.env["DATABASE"]
-
-        conn = sqlite3.connect(self.env["DATABASE"])
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        with open(dir_path + "/test_database_fixture.sql", "r") as f:
-            conn.executescript(f.read())
-
+        self.env = setUpTestDatabase()
         self.thunter = TaskHunter()
 
     def tearDown(self):
         """Remove the temporary environment and database after tests."""
-        shutil.rmtree(self.env["THUNTER_DIR"])
+        tearDownTestDatabase(self.env)
 
     def test__init__(self):
         thunter = TaskHunter()
-        self.assertEqual(thunter.database, self.env["DATABASE"])
+        self.assertEqual(thunter.database, self.env.DATABASE)
 
         thunter = TaskHunter("/database.db")
         self.assertEqual(thunter.database, "/database.db")

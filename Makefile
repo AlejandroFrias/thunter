@@ -10,7 +10,7 @@ install:
 	pip install .
 
 .PHONY: uninstall
-install:
+uninstall:
 	pip uninstall .
 
 .PHONY: develop
@@ -25,7 +25,11 @@ clean:
 
 .PHONY: lint
 lint:
-	find . -type f -name '*.py' | xargs flake8
+	black --check thunter/
+
+.PHONY: format
+lint:
+	black thunter/
 
 .PHONY: db
 db:

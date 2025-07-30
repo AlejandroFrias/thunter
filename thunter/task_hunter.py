@@ -73,11 +73,11 @@ class TaskHunter:
 
         if len(tasks) == 0:
             raise ThunterCouldNotFindTaskError(
-                f"Could not find task for identifier: [yellow]{task_identifier}[/yellow]"
+                f"Could not find task for identifier: {task_identifier}"
             )
         elif len(tasks) > 1:
             raise ThunterFoundMultipleTasksError(
-                f"Found multiple tasks for identifier: [yellow]{task_identifier}[/yellow]"
+                f"Found multiple tasks for identifier: {task_identifier}"
             )
 
         return tasks[0]
