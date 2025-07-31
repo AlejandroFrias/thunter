@@ -1,3 +1,4 @@
+import re
 import shutil
 import sys
 import os
@@ -8,7 +9,7 @@ from io import StringIO
 from typing_extensions import Annotated
 
 import sqlite3
-import typer
+import typer.core
 from rich import box
 from rich.console import Console
 from rich.table import Table
@@ -24,8 +25,32 @@ from thunter.models import TaskHistoryRecord
 from thunter.task_hunter import TaskHunter
 from thunter.task_parser import parse_task_display
 
+
+class AliasGroup(typer.core.TyperGroup):
+    """Custom override of TyperGroup to support command aliases.
+
+    Watch this issue for possible native support in Typer for aliases:
+    https://github.com/fastapi/typer/issues/1242
+    """
+
+    _CMD_SPLIT_P = re.compile(r" ?[,|] ?")
+
+    def get_command(self, ctx, cmd_name):
+        cmd_name = self._group_cmd_name(cmd_name)
+        return super().get_command(ctx, cmd_name)
+
+    def _group_cmd_name(self, default_name):
+        for cmd in self.commands.values():
+            name = cmd.name
+            if name and default_name in self._CMD_SPLIT_P.split(name):
+                return name
+        return default_name
+
+
 thunter_cli_app = typer.Typer(
+    name="thunter",
     no_args_is_help=True,
+    cls=AliasGroup,
 )
 state = {"silent": settings.THUNTER_SILENT, "debug": settings.DEBUG}
 
@@ -62,7 +87,7 @@ def main_callback(
     state["silent"] = silent or settings.THUNTER_SILENT
     state["debug"] = debug or settings.DEBUG
     if ctx.invoked_subcommand != "init" and settings.needs_init():
-        init()
+        ctx.invoke(init)
 
 
 @thunter_cli_app.command()
@@ -85,8 +110,9 @@ def init(
             raise typer.Exit()
         thunter_print(f"Deleting THunter directory: {settings.THUNTER_DIR}")
         shutil.rmtree(settings.THUNTER_DIR)
-    thunter_print(f"Creating THunter directory: {settings.THUNTER_DIR}")
-    os.mkdir(settings.THUNTER_DIR)
+    if not os.path.exists(settings.THUNTER_DIR):
+        thunter_print(f"Creating THunter directory: {settings.THUNTER_DIR}")
+        os.mkdir(settings.THUNTER_DIR)
     thunter_print(f"Creating sqlite database {settings.DATABASE}")
     conn = sqlite3.connect(settings.DATABASE)
 
@@ -103,7 +129,7 @@ def init(
     thunter_print("THunter initialized successfully!")
 
 
-@thunter_cli_app.command()
+@thunter_cli_app.command("ls, list")
 def ls(
     all: Annotated[
         bool | None,
