@@ -2,6 +2,7 @@ from contextlib import contextmanager
 import sqlite3
 import time
 from datetime import datetime
+from typing import Sequence
 from thunter import settings
 from thunter.constants import (
     Status,
@@ -210,15 +211,18 @@ class TaskHunter:
         delete_history_sql = "DELETE from {table} WHERE taskid=?".format(
             table=TableName.HISTORY.value
         )
-        self.execute(delete_task_sql, (taskid,))
-        self.execute(delete_history_sql, (taskid,))
+        with self.connect() as conn:
+            conn.execute(delete_task_sql, [taskid])
+            conn.execute(delete_history_sql, [taskid])
 
     def update_task_field(self, taskid: int, field: str, value: str | int) -> None:
         """Update a specific field of a task in the database."""
         sql = ("UPDATE {table} SET {field}=?, last_modified=? " "WHERE id=?").format(
             table=TableName.TASKS.value, field=field
         )
-        self.execute(sql, (value, now(), taskid))
+        sql_params = (value, now(), taskid)
+        with self.connect() as conn:
+            conn.execute(sql, sql_params)
 
     def select_from_task(
         self,
@@ -297,14 +301,9 @@ class TaskHunter:
         sql = ("INSERT INTO {table} (taskid,is_start,time) VALUES " "(?,?,?)").format(
             table=TableName.HISTORY.value
         )
-        self.execute(sql, (taskid, is_start, time))
-
-    def execute(self, sql, sql_params=None):
-        if sql_params is None:
-            sql_params = []
+        sql_params = (taskid, is_start, time)
         with self.connect() as conn:
-            rows = conn.execute(sql, sql_params).fetchall()
-        return rows
+            conn.execute(sql, sql_params)
 
     @contextmanager
     def connect(self):
