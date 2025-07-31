@@ -180,16 +180,14 @@ class TestTaskHunter(TestCase):
     def test_stop_current_task(self):
         current_task = self.thunter.get_current_task()
         self.assertIsNotNone(current_task)
-        if current_task is None:
-            raise AssertionError
+        assert current_task
 
         current_history = self.thunter.get_history([current_task.id])
         self.assertEqual(current_task.status, Status.CURRENT)
         self.assertEqual(len(current_history), 3)
 
         stopped_task = self.thunter.stop_current_task()
-        if stopped_task is None:
-            raise AssertionError
+        assert stopped_task
 
         self.assertEqual(stopped_task.id, current_task.id)
         self.assertEqual(stopped_task.status, Status.IN_PROGRESS)

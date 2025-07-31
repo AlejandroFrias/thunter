@@ -28,7 +28,7 @@ lint:
 	black --check thunter/
 
 .PHONY: format
-lint:
+format:
 	black thunter/
 
 .PHONY: db

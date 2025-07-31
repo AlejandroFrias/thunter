@@ -151,7 +151,7 @@ def validate_task_data(task_data: ParsedTaskData) -> None:
     else:
         thunter_assert(
             len(task_data.history) > 0,
-            "Must have a history if status is %s" % task_data.status,
+            "Must have a history if status is %s" % task_data.status.value,
         )
 
     if task_data.status == Status.CURRENT:
@@ -164,14 +164,15 @@ def validate_task_data(task_data: ParsedTaskData) -> None:
         last_history_record = task_data.history[-1]
         thunter_assert(
             not last_history_record.is_start,
-            "Last history record must be a Stop if the status is %s" % task_data.status,
+            "Last history record must be a Stop if the status is %s"
+            % task_data.status.value,
         )
 
     expect_start = True
     last_history_time = 0
     for history_data in task_data.history:
         thunter_assert(
-            last_history_time < history_data.time,
+            last_history_time <= history_data.time,
             "History must be in ascending order by time",
         )
         thunter_assert(
