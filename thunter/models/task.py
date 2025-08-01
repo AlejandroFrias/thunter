@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from functools import total_ordering
-from typing import NamedTuple
 
 from thunter.constants import (
     STATUS_ORDERING,

@@ -1,7 +1,3 @@
-import os
-import shutil
-import sqlite3
-import tempfile
 from unittest import TestCase
 
 
@@ -218,7 +214,6 @@ class TestTaskHunter(TestCase):
 
     def test_estimate_task(self):
         current_task = self.thunter.get_task()
-        current_history = self.thunter.get_history([current_task.id])
         self.assertEqual(current_task.estimate, 32)
 
         self.thunter.estimate_task(taskid=current_task.id, estimate=10)

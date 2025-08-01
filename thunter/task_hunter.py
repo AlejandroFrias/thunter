@@ -2,7 +2,6 @@ from contextlib import contextmanager
 import sqlite3
 import time
 from datetime import datetime
-from typing import Sequence
 from thunter import settings
 from thunter.constants import (
     Status,
@@ -36,18 +35,21 @@ class TaskHunter:
         self,
         task_identifier: TaskIdentifier | None = None,
         statuses: set[Status] | None = None,
+        exact_match: bool = False,
     ) -> Task:
         """Fetch a task from the db by its identifier (name or id).
-        Defaults to returning the current task if no identifier is given.
 
+        Defaults to returning the current task if no identifier is given.
         Optionally filter by statuses in the search.
 
-        Raises:
-            ThunterCouldNotFindTaskError: If no task is found.
-            ThunterFoundMultipleTasksError: If multiple tasks match the identifier.
+        :param TaskIdentifier task_identifier: The identifier of the task to fetch (name or id).
+        :param set[Status] statuses: A set of statuses to filter the task by.
+        :param bool exact_match: If True, the task name must match exactly [default: False, will hit with partial matches]
 
-        Returns:
-            Task: The task object that matches the identifier.
+        :return Task: The matching task.
+
+        :raises ThunterCouldNotFindTaskError: If no task is found.
+        :raises ThunterFoundMultipleTasksError: If multiple tasks match the identifier.
         """
         if not task_identifier:
             current_task = self.get_current_task()
@@ -59,6 +61,9 @@ class TaskHunter:
         if isinstance(task_identifier, int) or task_identifier.isdigit():
             where_clause = "id=?"
             params = [str(task_identifier)]
+        elif exact_match:
+            where_clause = "name = ?"
+            params = [task_identifier]
         else:
             where_clause = "name LIKE ?"
             params = [task_identifier + "%"]
@@ -98,7 +103,13 @@ class TaskHunter:
         description: str | None = None,
         status: Status = Status.TODO,
     ) -> Task:
-        """Create a new task in the database and return it."""
+        """Create a new task in the database and return it.
+
+        :param name: The name of the task.
+        :param estimate: The estimated time for the task in hours.
+        :param description: A description of the task.
+        :param status: The initial status of the task [default: TODO].
+        """
         new_task_id = self.insert_task(
             name, estimate, description, status, last_modified=now()
         )
@@ -217,7 +228,7 @@ class TaskHunter:
 
     def update_task_field(self, taskid: int, field: str, value: str | int) -> None:
         """Update a specific field of a task in the database."""
-        sql = ("UPDATE {table} SET {field}=?, last_modified=? " "WHERE id=?").format(
+        sql = ("UPDATE {table} SET {field}=?, last_modified=? WHERE id=?").format(
             table=TableName.TASKS.value, field=field
         )
         sql_params = (value, now(), taskid)
@@ -293,12 +304,12 @@ class TaskHunter:
                     last_modified,
                 ),
             ).lastrowid
-            if new_task_id == None:
+            if new_task_id is None:
                 raise AssertionError(f"Could not insert task: {name}")
         return new_task_id
 
     def insert_history(self, taskid: int, is_start: bool, time: int) -> None:
-        sql = ("INSERT INTO {table} (taskid,is_start,time) VALUES " "(?,?,?)").format(
+        sql = ("INSERT INTO {table} (taskid,is_start,time) VALUES (?,?,?)").format(
             table=TableName.HISTORY.value
         )
         sql_params = (taskid, is_start, time)

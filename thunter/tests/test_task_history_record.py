@@ -1,7 +1,5 @@
-import re
 from unittest import TestCase
 
-from thunter.constants import Status
 from thunter.models import TaskHistoryRecord
 
 

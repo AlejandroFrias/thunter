@@ -155,11 +155,14 @@ class TestShowCommand(CliCommandTestBaseClass):
 
 class TestWorkonCommand(CliCommandTestBaseClass):
     def test_workon_task(self):
-        result = self.runner.invoke(thunter_cli_app, ["workon", "a test task"])
-        self.assertIn("Working on task: a test task", result.output)
+        result = self.runner.invoke(thunter_cli_app, ["show"])
+        self.assertIn("a long task", result.output)
+        self.assertNotIn("a test task", result.output)
 
-        result = self.runner.invoke(thunter_cli_app, ["workon", "4"])
-        self.assertIn("Working on task: a finished task", result.output)
+        self.runner.invoke(thunter_cli_app, ["workon", "a test task"])
+        result = self.runner.invoke(thunter_cli_app, ["show"])
+        self.assertNotIn("a long task", result.output)
+        self.assertIn("a test task", result.output)
 
     def test_workon_nonexistent_task(self):
         result = self.runner.invoke(thunter_cli_app, ["workon", "999"])

@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import TypeGuard
 from parsimonious import Grammar, NodeVisitor
 from time import strptime
 import calendar
@@ -28,7 +27,6 @@ class TaskVisitor(NodeVisitor):
 
     def __init__(self):
         super().__init__()
-        print("Initializing TaskVisitor")
         self.grammar = Grammar(
             r"""task = name newline+
 estimate newline+
@@ -59,7 +57,6 @@ minutes = ~"[0-5][0-9]"
 seconds = minutes
 """
         )
-        print("Initialized TaskVisitor")
 
     def visit_task(self, node, visited_children) -> ParsedTaskData:
         (name, _nl1, estimate, _nl2, status, _nl3, description, _nl4, history, _nl5) = (
