@@ -3,6 +3,9 @@ import os
 import shutil
 import sqlite3
 import tempfile
+from unittest import TestCase
+
+from typer.testing import CliRunner
 
 from thunter import settings
 from thunter.task_hunter import TaskHunter
@@ -35,3 +38,15 @@ def setUpTestDatabase() -> TestDatabaseEnvironment:
 def tearDownTestDatabase(env: TestDatabaseEnvironment) -> None:
     """Remove the temporary environment and database after tests."""
     shutil.rmtree(env.THUNTER_DIR)
+
+
+class CliCommandTestBaseClass(TestCase):
+
+    def setUp(self):
+        self.env = setUpTestDatabase()
+        self.thunter = TaskHunter()
+        self.runner = CliRunner()
+
+    def tearDown(self):
+        """Remove the temporary environment and database after tests."""
+        tearDownTestDatabase(self.env)

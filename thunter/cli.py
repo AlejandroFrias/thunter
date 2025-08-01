@@ -281,13 +281,7 @@ def ls(
 def show(task_id: Annotated[str | None, typer.Argument()] = None):
     """Display task. Defaults to the currently active task if there is one."""
     hunter = TaskHunter()
-    if task_id:
-        task = hunter.get_task(task_id)
-    else:
-        task = hunter.get_current_task()
-        if not task:
-            thunter_print("No current task found.", style="red")
-            return
+    task = hunter.get_task(task_id)
     thunter_print(hunter.display_task(task.id))
 
 
