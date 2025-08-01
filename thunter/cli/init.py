@@ -5,9 +5,9 @@ from typing import Annotated
 
 import typer
 
-from thunter import settings
-from thunter.cli.cli import thunter_print
 from thunter.constants import TableName
+from thunter import settings
+from thunter.settings import thunter_print, needs_init
 
 app = typer.Typer()
 
@@ -24,7 +24,7 @@ def init(
     The database file can be found in the THUNTER_DIRECTORY, defaults to ~/.thunter.
     """
     thunter_print("Initializing THunter...")
-    if not settings.needs_init():
+    if not needs_init():
         prompt = "WARNING: Are you sure you want to re-initialize? You will lose all tasks and tracking info [yN]"
         user_sure = force or input(prompt).lower() == "y"
         if not user_sure:
