@@ -37,5 +37,5 @@ def estimate(
     hunter.estimate_task(task.id, estimate)
     task = hunter.get_task(task.id)
     thunter_print(
-        f"[green]{task.name}[/green] estimated to take [yellow]{task.estimate_display}[/yellow]"
+        f"[green]{task.name}[/green] estimated to take [yellow]{task.estimate_display}[/yellow]."
     )
