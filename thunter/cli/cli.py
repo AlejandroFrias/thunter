@@ -21,6 +21,7 @@ from thunter.cli.finish import app as finish_app
 from thunter.cli.estimate import app as estimate_app
 from thunter.cli.edit import app as edit_app
 from thunter.cli.rm import app as rm_app
+from thunter.cli.db import app as db_app
 from thunter.constants import ThunterError
 
 
@@ -62,6 +63,7 @@ thunter_cli_app.add_typer(finish_app)
 thunter_cli_app.add_typer(estimate_app)
 thunter_cli_app.add_typer(edit_app)
 thunter_cli_app.add_typer(rm_app)
+thunter_cli_app.add_typer(db_app)
 
 
 @thunter_cli_app.callback()
