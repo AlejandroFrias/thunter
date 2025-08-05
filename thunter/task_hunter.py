@@ -1,7 +1,9 @@
-from contextlib import contextmanager
-import sqlite3
 import time
+from contextlib import contextmanager
 from datetime import datetime
+
+import sqlite3
+
 from thunter import settings
 from thunter.constants import (
     Status,

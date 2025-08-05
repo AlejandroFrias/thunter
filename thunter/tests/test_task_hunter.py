@@ -8,12 +8,13 @@ from thunter.constants import (
     ThunterFoundMultipleTasksError,
     ThunterNotInitializedError,
 )
+from thunter.models.task import Task
+from thunter.models.task_history_record import TaskHistoryRecord
 from thunter.task_hunter import TaskHunter
 from thunter.tests import setUpTestDatabase, tearDownTestDatabase
 
 
 class TestTaskHunter(TestCase):
-
     def setUp(self):
         self.env = setUpTestDatabase()
         self.thunter = TaskHunter()
@@ -226,3 +227,33 @@ class TestTaskHunter(TestCase):
         self.thunter.remove_task(current_task.id)
         with self.assertRaises(ThunterCouldNotFindTaskError):
             self.thunter.get_task(current_task.id)
+
+    def test_select_from_history(self):
+        history = self.thunter.select_from_history(
+            where_clause="taskid = ?",
+            order_by="time ASC",
+            params=["1"],
+        )
+        expected_history = [
+            TaskHistoryRecord(id=3, taskid=1, is_start=True, time=1722208103),
+            TaskHistoryRecord(id=4, taskid=1, is_start=False, time=1753732126),
+        ]
+        self.assertEqual(history, expected_history)
+
+    def test_select_from_task(self):
+        history = self.thunter.select_from_task(
+            where_clause="id = ?",
+            order_by="id ASC",
+            params=["1"],
+        )
+        expected_history = [
+            Task(
+                id=1,
+                name="a test task",
+                estimate=4,
+                description=None,
+                status=Status.IN_PROGRESS,
+                last_modified=1753732126,
+            ),
+        ]
+        self.assertEqual(history, expected_history)
