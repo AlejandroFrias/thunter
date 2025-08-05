@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "thunter"
 version = "0.0.0"
-dependencies = ["typer", "rich", "parsimonious"]
+dependencies = ["typer", "rich", "parsimonious", "numpy", "pandas"]
 requires-python = ">= 3.10"
 authors = [{ name = "Alejandro Frias", email = "joker454@gmail.com" }]
 maintainers = [{ name = "Alejandro Frias", email = "joker454@gmail.com" }]

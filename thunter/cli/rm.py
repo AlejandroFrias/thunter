@@ -8,7 +8,7 @@ from thunter.task_hunter import TaskHunter
 app = typer.Typer()
 
 
-@app.command()
+@app.command("rm, remove")
 def rm(
     task_id: Annotated[
         list[str], typer.Argument(help="ID or name of task to be removed.")

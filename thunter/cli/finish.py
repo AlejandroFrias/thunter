@@ -9,7 +9,7 @@ from thunter.task_hunter import TaskHunter
 app = typer.Typer()
 
 
-@app.command()
+@app.command("f, finish")
 def finish(task_id: Annotated[str | None, typer.Argument()] = None):
     """Finish a task (defaults to finish current task)."""
     hunter = TaskHunter()

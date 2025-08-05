@@ -9,7 +9,7 @@ from thunter.task_hunter import TaskHunter
 app = typer.Typer()
 
 
-@app.command()
+@app.command("w, workon")
 def workon(
     ctx: typer.Context,
     task_id: Annotated[list[str] | None, typer.Argument()] = None,
