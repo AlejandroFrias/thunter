@@ -25,7 +25,7 @@ class Database:
                 "description TEXT, "
                 "status TEXT NOT NULL, "
                 "last_modified_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', current_timestamp) AS integer)), "
-                "create_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', current_timestamp) AS integer))"
+                "created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', current_timestamp) AS integer))"
                 ")"
             )
             con.execute(

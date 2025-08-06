@@ -31,14 +31,20 @@ class TaskAnalyzer(Database):
         """Fetch the tasks as a DataFrame."""
         with self.connect() as con:
             df = pd.read_sql(
-                (f"SELECT id, estimate, name FROM {TableName.TASKS.value} "),
+                f"SELECT id, estimate, name, created_at FROM {TableName.TASKS.value}",
                 con=con,
-                dtype={
-                    "estimate": pd.Int32Dtype(),
-                    "is_start": pd.BooleanDtype(),
-                    "name": pd.StringDtype(),
-                    "time": pd.Int64Dtype(),
-                },
+                parse_dates={"created_at": "s"},
+            )
+
+        return df
+
+    def fetch_history_df(self) -> pd.DataFrame:
+        """Fetch the tasks as a DataFrame."""
+        with self.connect() as con:
+            df = pd.read_sql(
+                f"SELECT id, taskid, is_start, time FROM {TableName.HISTORY.value} ORDER BY taskid, time ASC",
+                con=con,
+                dtype={"is_start": bool},
             )
 
         return df

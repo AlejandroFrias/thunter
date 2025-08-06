@@ -1,6 +1,6 @@
 PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
-CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, estimate INTEGER, description TEXT, status TEXT NOT NULL, last_modified_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', current_timestamp) AS integer)), create_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', current_timestamp) AS integer)));
+CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, estimate INTEGER, description TEXT, status TEXT NOT NULL, last_modified_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', current_timestamp) AS integer)), created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', current_timestamp) AS integer)));
 INSERT INTO tasks VALUES(1,'a test task',4,NULL,'In Progress',1753732126,1753732126);
 INSERT INTO tasks VALUES(2,'another great test task',4,NULL,'TODO',1753732059,1753732059);
 INSERT INTO tasks VALUES(4,'a finished task',2,NULL,'Finished',1753732131,1753732131);

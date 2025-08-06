@@ -1,7 +1,6 @@
 from unittest import TestCase
 
-from thunter import settings
-from thunter.constants import Status, ThunterNotInitializedError
+from thunter.constants import Status
 from thunter.db import Database
 from thunter.models.task import Task
 from thunter.models.task_history_record import TaskHistoryRecord
