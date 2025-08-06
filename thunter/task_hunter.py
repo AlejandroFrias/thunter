@@ -54,7 +54,7 @@ class TaskHunter(Database):
             where_clause += " AND status IN (" + ",".join(len(statuses) * "?") + ")"
             params.extend(map(lambda s: s.value, statuses))
 
-        order_by: str = "last_modified DESC"
+        order_by: str = "last_modified_at DESC"
         tasks = self.select_from_task(
             where_clause=where_clause, order_by=order_by, params=params
         )
@@ -93,7 +93,7 @@ class TaskHunter(Database):
         :param status: The initial status of the task [default: TODO].
         """
         new_task_id = self.insert_task(
-            name, estimate, description, status, last_modified=now()
+            name, estimate, description, status, last_modified_at=now()
         )
         return self.get_task(new_task_id)
 
@@ -167,9 +167,9 @@ class TaskHunter(Database):
         if current_task:
             if current_task.id == task.id:
                 return
-            self.insert_history(taskid=current_task.id, is_start=False, time=now())
+            self.insert_history(taskid=current_task.id, is_start=False)
             self.update_task_field(current_task.id, "status", Status.IN_PROGRESS.value)
-        self.insert_history(taskid=task.id, is_start=True, time=now())
+        self.insert_history(taskid=task.id, is_start=True)
         self.update_task_field(task.id, "status", Status.CURRENT.value)
 
     def stop_current_task(self) -> Task | None:
@@ -177,7 +177,7 @@ class TaskHunter(Database):
         current_task = self.get_current_task()
         if not current_task:
             return
-        self.insert_history(taskid=current_task.id, is_start=False, time=now())
+        self.insert_history(taskid=current_task.id, is_start=False)
         self.update_task_field(current_task.id, "status", Status.IN_PROGRESS.value)
         return self.get_task(current_task.id)
 
@@ -185,7 +185,7 @@ class TaskHunter(Database):
         """Mark a task as finished and update its status."""
         task = self.get_task(taskid)
         if task.status == Status.CURRENT:
-            self.insert_history(taskid=task.id, is_start=False, time=now())
+            self.insert_history(taskid=task.id, is_start=False)
 
         if task.status != Status.FINISHED:
             self.update_task_field(

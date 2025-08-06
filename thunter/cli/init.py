@@ -7,6 +7,7 @@ import typer
 
 from thunter.constants import TableName
 from thunter import settings
+from thunter.db import Database
 from thunter.settings import thunter_print, needs_init
 
 app = typer.Typer()
@@ -32,20 +33,13 @@ def init(
             raise typer.Exit()
         thunter_print(f"Deleting THunter directory: {settings.THUNTER_DIR}")
         shutil.rmtree(settings.THUNTER_DIR)
+
     if not os.path.exists(settings.THUNTER_DIR):
         thunter_print(f"Creating THunter directory: {settings.THUNTER_DIR}")
         os.mkdir(settings.THUNTER_DIR)
+
     thunter_print(f"Creating sqlite database {settings.DATABASE}")
-    conn = sqlite3.connect(settings.DATABASE)
+    db = Database()
+    db.init_db()
 
-    thunter_print("Creating tables")
-    create_tasks_table_sql = f"CREATE TABLE {TableName.TASKS.value}(id INTEGER PRIMARY KEY, name TEXT, estimate INTEGER, description TEXT, status TEXT, last_modified INTEGER)"
-    thunter_print(create_tasks_table_sql)
-    conn.execute(create_tasks_table_sql)
-    create_history_table_sql = f"CREATE TABLE {TableName.HISTORY.value}(id INTEGER PRIMARY KEY, taskid INTEGER, is_start BOOLEAN, time INTEGER)"
-    thunter_print(create_history_table_sql)
-    conn.execute(create_history_table_sql)
-
-    conn.commit()
-    conn.close()
     thunter_print("THunter initialized successfully!")

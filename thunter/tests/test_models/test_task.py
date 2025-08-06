@@ -14,9 +14,9 @@ class TestTask(TestCase):
         self.assertEqual(task.estimate, 2)
         self.assertEqual(task.description, "This is a test task.")
         self.assertEqual(task.status.value, "TODO")
-        self.assertEqual(task.last_modified, 1633036800)
+        self.assertEqual(task.last_modified_at, 1633036800)
         self.assertEqual(task.estimate_display, "2 hrs")
-        self.assertEqual(task.last_modified_display, "2021-09-30 21:20:00")
+        self.assertEqual(task.last_modified_at_display, "2021-09-30 21:20:00")
 
     def test_ordering(self):
         """Test ordering of tasks based on statuses and last modified time."""
@@ -26,7 +26,7 @@ class TestTask(TestCase):
             estimate=1,
             description="Description A",
             status=Status.TODO,
-            last_modified=1633011111,
+            last_modified_at=1633011111,
         )
         task2 = Task(
             id=2,
@@ -34,7 +34,7 @@ class TestTask(TestCase):
             estimate=2,
             description="Description B",
             status=Status.IN_PROGRESS,
-            last_modified=1633022222,
+            last_modified_at=1633022222,
         )
         task3 = Task(
             id=3,
@@ -42,7 +42,7 @@ class TestTask(TestCase):
             estimate=None,
             description="Description C",
             status=Status.FINISHED,
-            last_modified=1633033333,
+            last_modified_at=1633033333,
         )
         task4 = Task(
             id=3,
@@ -50,7 +50,7 @@ class TestTask(TestCase):
             estimate=None,
             description="Description C",
             status=Status.FINISHED,
-            last_modified=1633044444,
+            last_modified_at=1633044444,
         )
 
         sorted_tasks = sorted([task4, task3, task2, task1])

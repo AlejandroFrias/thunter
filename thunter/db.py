@@ -12,14 +12,40 @@ class Database:
     database connections and handling initialization."""
 
     def __init__(self, database=None):
-        if not database and settings.needs_init():
-            raise ThunterNotInitializedError(
-                "[red]Error[/red]: Run [bold]thunter init[/bold] to initialize task database"
+        self.database = database or settings.DATABASE
+
+    def init_db(self):
+        """Setup the database and tables. Does nothing if the database is already initialized."""
+        with self.connect() as con:
+            con.execute(
+                f"CREATE TABLE IF NOT EXISTS {TableName.TASKS.value} ("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                "name TEXT NOT NULL, "
+                "estimate INTEGER, "
+                "description TEXT, "
+                "status TEXT NOT NULL, "
+                "last_modified_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', current_timestamp) AS integer)), "
+                "create_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', current_timestamp) AS integer))"
+                ")"
             )
-        if database:
-            self.database = database
-        else:
-            self.database = settings.DATABASE
+            con.execute(
+                f"CREATE TABLE IF NOT EXISTS {TableName.HISTORY.value} ("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "taskid INTEGER NOT NULL,"
+                "is_start BOOLEAN NOT NULL,"
+                "time INTEGER NOT NULL DEFAULT (CAST(strftime('%s', current_timestamp) AS integer)),"
+                f"FOREIGN KEY (taskid) REFERENCES {TableName.TASKS.value}(id)"
+                ")"
+            )
+            con.execute(
+                "CREATE TRIGGER IF NOT EXISTS last_modified_task_trigger "
+                f"AFTER UPDATE ON {TableName.TASKS.value} "
+                "BEGIN"
+                f"  UPDATE {TableName.TASKS.value} SET last_modified_at = "
+                "  (CAST(strftime('%s', current_timestamp) AS integer)) "
+                "  WHERE id = NEW.id;"
+                "END;"
+            )
 
     @contextmanager
     def connect(self):
@@ -30,7 +56,7 @@ class Database:
 
     def update_task_field(self, taskid: int, field: str, value: str | int) -> None:
         """Update a specific field of a task in the database."""
-        sql = ("UPDATE {table} SET {field}=?, last_modified=? WHERE id=?").format(
+        sql = ("UPDATE {table} SET {field}=?, last_modified_at=? WHERE id=?").format(
             table=TableName.TASKS.value, field=field
         )
         sql_params = (value, now(), taskid)
@@ -87,12 +113,12 @@ class Database:
         estimate: int | None,
         description: str | None,
         status: Status,
-        last_modified: int,
+        last_modified_at: int,
     ) -> int:
         """Insert a new task into the database and return its ID."""
         sql = (
             "INSERT INTO {table} "
-            "(name,estimate,description,status,last_modified) "
+            "(name,estimate,description,status,last_modified_at) "
             "VALUES (?,?,?,?,?)"
         ).format(table=TableName.TASKS.value)
         with self.connect() as conn:
@@ -103,17 +129,26 @@ class Database:
                     estimate,
                     description,
                     status.value,
-                    last_modified,
+                    last_modified_at,
                 ),
             ).lastrowid
             if new_task_id is None:
                 raise AssertionError(f"Could not insert task: {name}")
         return new_task_id
 
-    def insert_history(self, taskid: int, is_start: bool, time: int) -> None:
-        sql = ("INSERT INTO {table} (taskid,is_start,time) VALUES (?,?,?)").format(
-            table=TableName.HISTORY.value
-        )
-        sql_params = (taskid, is_start, time)
+    def insert_history(
+        self, taskid: int, is_start: bool, time: int | None = None
+    ) -> None:
+        if time is None:
+            sql = (
+                f"INSERT INTO {TableName.HISTORY.value} (taskid,is_start) VALUES (?,?)"
+            )
+            sql_params = (taskid, is_start)
+        else:
+            sql = ("INSERT INTO {table} (taskid,is_start,time) VALUES (?,?,?)").format(
+                table=TableName.HISTORY.value
+            )
+            sql_params = (taskid, is_start, time)
+
         with self.connect() as conn:
             conn.execute(sql, sql_params)

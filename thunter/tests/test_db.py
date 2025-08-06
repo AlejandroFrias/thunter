@@ -24,10 +24,6 @@ class TestTaskHunter(TestCase):
         thunter = Database("/database.db")
         self.assertEqual(thunter.database, "/database.db")
 
-        settings.DATABASE = None
-        with self.assertRaises(ThunterNotInitializedError):
-            Database()
-
     def test_select_from_history(self):
         history = self.database.select_from_history(
             where_clause="taskid = ?",
@@ -53,7 +49,7 @@ class TestTaskHunter(TestCase):
                 estimate=4,
                 description=None,
                 status=Status.IN_PROGRESS,
-                last_modified=1753732126,
+                last_modified_at=1753732126,
             ),
         ]
         self.assertEqual(history, expected_history)

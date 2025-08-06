@@ -22,7 +22,7 @@ class Task:
     estimate: int | None
     description: str | None
     status: Status
-    last_modified: int
+    last_modified_at: int
 
     @classmethod
     def from_db_record(cls, record: tuple[int, str, int | None, str | None, str, int]):
@@ -32,12 +32,12 @@ class Task:
             estimate=record[2],
             description=record[3],
             status=Status(record[4]),
-            last_modified=record[5],
+            last_modified_at=record[5],
         )
 
     @property
-    def last_modified_display(self):
-        return display_time(self.last_modified)
+    def last_modified_at_display(self):
+        return display_time(self.last_modified_at)
 
     @property
     def estimate_display(self):
@@ -49,9 +49,9 @@ class Task:
         return estimate_display_str
 
     def __lt__(self, other):
-        return (STATUS_ORDERING.index(self.status.value), -self.last_modified) < (
+        return (STATUS_ORDERING.index(self.status.value), -self.last_modified_at) < (
             STATUS_ORDERING.index(other.status.value),
-            -other.last_modified,
+            -other.last_modified_at,
         )
 
     def __eq__(self, other):
