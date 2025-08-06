@@ -51,6 +51,7 @@ def edit(
         estimate=parsed_task_data.estimate,
         description=parsed_task_data.description,
         status=parsed_task_data.status,
+        created_at=task.created_at,
     )
     for history_data in parsed_task_data.history:
         hunter.insert_history(

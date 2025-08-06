@@ -50,6 +50,7 @@ class TestTaskHunter(TestCase):
                 description=None,
                 status=Status.IN_PROGRESS,
                 last_modified_at=1753732126,
+                created_at=1753732126,
             ),
         ]
         self.assertEqual(history, expected_history)

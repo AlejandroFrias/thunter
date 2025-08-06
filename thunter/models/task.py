@@ -23,9 +23,12 @@ class Task:
     description: str | None
     status: Status
     last_modified_at: int
+    created_at: int
 
     @classmethod
-    def from_db_record(cls, record: tuple[int, str, int | None, str | None, str, int]):
+    def from_db_record(
+        cls, record: tuple[int, str, int | None, str | None, str, int, int]
+    ):
         return cls(
             id=record[0],
             name=record[1],
@@ -33,6 +36,7 @@ class Task:
             description=record[3],
             status=Status(record[4]),
             last_modified_at=record[5],
+            created_at=record[6],
         )
 
     @property

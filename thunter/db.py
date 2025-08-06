@@ -113,25 +113,36 @@ class Database:
         estimate: int | None,
         description: str | None,
         status: Status,
-        last_modified_at: int,
+        created_at: int | None = None,
     ) -> int:
         """Insert a new task into the database and return its ID."""
-        sql = (
-            "INSERT INTO {table} "
-            "(name,estimate,description,status,last_modified_at) "
-            "VALUES (?,?,?,?,?)"
-        ).format(table=TableName.TASKS.value)
+        if created_at is None:
+            sql = (
+                f"INSERT INTO {TableName.TASKS.value} "
+                "(name,estimate,description,status) "
+                "VALUES (?,?,?,?)"
+            )
+            sql_params = (
+                name,
+                estimate,
+                description,
+                status.value,
+            )
+        else:
+            sql = (
+                f"INSERT INTO {TableName.TASKS.value} "
+                "(name,estimate,description,status,created_at) "
+                "VALUES (?,?,?,?,?)"
+            )
+            sql_params = (
+                name,
+                estimate,
+                description,
+                status.value,
+                created_at,
+            )
         with self.connect() as conn:
-            new_task_id = conn.execute(
-                sql,
-                (
-                    name,
-                    estimate,
-                    description,
-                    status.value,
-                    last_modified_at,
-                ),
-            ).lastrowid
+            new_task_id = conn.execute(sql, sql_params).lastrowid
             if new_task_id is None:
                 raise AssertionError(f"Could not insert task: {name}")
         return new_task_id

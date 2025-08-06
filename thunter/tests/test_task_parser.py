@@ -21,6 +21,7 @@ class TestTaskParser(TestCase):
             estimate=4,
             status=Status.IN_PROGRESS,
             last_modified_at=1633036800,
+            created_at=1633036800,
         )
         task_history = [
             TaskHistoryRecord(

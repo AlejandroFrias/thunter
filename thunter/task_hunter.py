@@ -84,6 +84,7 @@ class TaskHunter(Database):
         estimate: int | None = None,
         description: str | None = None,
         status: Status = Status.TODO,
+        created_at: int | None = None,
     ) -> Task:
         """Create a new task in the database and return it.
 
@@ -93,7 +94,11 @@ class TaskHunter(Database):
         :param status: The initial status of the task [default: TODO].
         """
         new_task_id = self.insert_task(
-            name, estimate, description, status, last_modified_at=now()
+            name=name,
+            estimate=estimate,
+            description=description,
+            status=status,
+            created_at=created_at,
         )
         return self.get_task(new_task_id)
 
