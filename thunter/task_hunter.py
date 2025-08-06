@@ -1,37 +1,17 @@
-import time
-from contextlib import contextmanager
-from datetime import datetime
-
-import sqlite3
-
-from thunter import settings
 from thunter.constants import (
     Status,
     TableName,
     ThunterCouldNotFindTaskError,
     ThunterFoundMultipleTasksError,
-    ThunterNotInitializedError,
+    now,
 )
+from thunter.db import Database
 from thunter.models import Task, TaskHistoryRecord, TaskIdentifier
 from thunter.task_parser import display_task
 
 
-def now():
-    return int(time.mktime(datetime.now().timetuple()))
-
-
-class TaskHunter:
+class TaskHunter(Database):
     """The tasks manager class for interacting with tasks and their time tracking history."""
-
-    def __init__(self, database=None):
-        if not database and settings.needs_init():
-            raise ThunterNotInitializedError(
-                "[red]Error[/red]: Run [bold]thunter init[/bold] to initialize task database"
-            )
-        if database:
-            self.database = database
-        else:
-            self.database = settings.DATABASE
 
     def get_task(
         self,
@@ -227,100 +207,3 @@ class TaskHunter:
         with self.connect() as conn:
             conn.execute(delete_task_sql, [taskid])
             conn.execute(delete_history_sql, [taskid])
-
-    def update_task_field(self, taskid: int, field: str, value: str | int) -> None:
-        """Update a specific field of a task in the database."""
-        sql = ("UPDATE {table} SET {field}=?, last_modified=? WHERE id=?").format(
-            table=TableName.TASKS.value, field=field
-        )
-        sql_params = (value, now(), taskid)
-        with self.connect() as conn:
-            conn.execute(sql, sql_params)
-
-    def select_from_task(
-        self,
-        where_clause: str | None = None,
-        order_by: str | None = None,
-        params: list[str] | None = None,
-    ) -> list[Task]:
-        return list(
-            map(
-                Task.from_db_record,
-                self.select_from_table(TableName.TASKS, where_clause, order_by, params),
-            )
-        )
-
-    def select_from_history(
-        self,
-        where_clause: str | None = None,
-        order_by: str | None = None,
-        params: list[str] | None = None,
-    ) -> list[TaskHistoryRecord]:
-        return list(
-            map(
-                TaskHistoryRecord.from_db_record,
-                self.select_from_table(
-                    TableName.HISTORY, where_clause, order_by, params
-                ),
-            )
-        )
-
-    def select_from_table(
-        self,
-        table: TableName,
-        where_clause: str | None = None,
-        order_by: str | None = None,
-        params: list[str] | None = None,
-    ):
-        sql = "SELECT * FROM {table}".format(table=table.value)
-        if where_clause:
-            sql += " WHERE " + where_clause
-        if order_by:
-            sql += " ORDER BY " + order_by
-
-        with self.connect() as conn:
-            return conn.execute(sql, params or []).fetchall()
-
-    def insert_task(
-        self,
-        name: str,
-        estimate: int | None,
-        description: str | None,
-        status: Status,
-        last_modified: int,
-    ) -> int:
-        """Insert a new task into the database and return its ID."""
-        sql = (
-            "INSERT INTO {table} "
-            "(name,estimate,description,status,last_modified) "
-            "VALUES (?,?,?,?,?)"
-        ).format(table=TableName.TASKS.value)
-        with self.connect() as conn:
-            new_task_id = conn.execute(
-                sql,
-                (
-                    name,
-                    estimate,
-                    description,
-                    status.value,
-                    last_modified,
-                ),
-            ).lastrowid
-            if new_task_id is None:
-                raise AssertionError(f"Could not insert task: {name}")
-        return new_task_id
-
-    def insert_history(self, taskid: int, is_start: bool, time: int) -> None:
-        sql = ("INSERT INTO {table} (taskid,is_start,time) VALUES (?,?,?)").format(
-            table=TableName.HISTORY.value
-        )
-        sql_params = (taskid, is_start, time)
-        with self.connect() as conn:
-            conn.execute(sql, sql_params)
-
-    @contextmanager
-    def connect(self):
-        conn = sqlite3.connect(self.database)
-        yield conn
-        conn.commit()
-        conn.close()

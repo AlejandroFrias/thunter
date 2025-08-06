@@ -1,5 +1,10 @@
+from datetime import datetime
 from enum import Enum
-from time import gmtime, strftime
+from time import gmtime, mktime, strftime
+
+
+def now():
+    return int(mktime(datetime.now().timetuple()))
 
 
 class TableName(Enum):
