@@ -8,9 +8,7 @@ app = typer.Typer()
 
 
 @app.command()
-def db(
-    ctx: typer.Context,
-):
+def db():
     """Access the sqlite database directly. Tables: tasks, history
 
     sqlite3> SELECT * FROM tasks

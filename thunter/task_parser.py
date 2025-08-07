@@ -22,6 +22,9 @@ class ParsedTaskData:
     history: list[ParsedTaskHistoryRecord]
 
 
+# TODO: consider using https://github.com/pyparsing/pyparsing?tab=readme-ov-file
+
+
 class TaskVisitor(NodeVisitor):
     grammar: Grammar
 

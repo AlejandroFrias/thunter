@@ -20,4 +20,6 @@ def analyze():
     # sum up the time for each task
     actual_time = history_df.groupby("taskid", sort=False)["time"].sum()
 
+    # TODO: time series plot of estimate vs actual
+
     embed()
