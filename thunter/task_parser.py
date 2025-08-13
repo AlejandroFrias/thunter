@@ -1,7 +1,9 @@
-from dataclasses import dataclass
-from parsimonious import Grammar, NodeVisitor
-from time import strptime
 import calendar
+from dataclasses import dataclass
+from time import strptime
+from typing import TypeGuard
+
+import pyparsing as pp
 
 from thunter.constants import TIME_FORMAT, ThunterTaskValidationError, Status
 from thunter.models import Task, TaskHistoryRecord
@@ -22,118 +24,57 @@ class ParsedTaskData:
     history: list[ParsedTaskHistoryRecord]
 
 
-# TODO: consider using https://github.com/pyparsing/pyparsing?tab=readme-ov-file
+def parse_time(t: pp.ParseResults):
+    if isinstance(t.time, str):
+        return calendar.timegm(strptime(t.time, TIME_FORMAT))
+    raise ValueError
 
 
-class TaskVisitor(NodeVisitor):
-    grammar: Grammar
+word = pp.Word(pp.alphanums + " .!?&-_")
+number = pp.common.integer
+status_type = pp.one_of([s.value for s in Status]).set_parse_action(
+    lambda t: Status(t.status)
+)
+is_start = pp.one_of(["Start", "Stop"])("is_start").set_parse_action(
+    lambda t: t[0] == "Start"
+)
+time = pp.Word(pp.nums + " -:")("time").set_parse_action(parse_time)
+name = pp.Suppress("NAME:") + word("name")
+estimate = pp.Suppress("ESTIMATE:") + number("estimate")
+status = pp.Suppress("STATUS:") + status_type("status")
+description = pp.Suppress("DESCRIPTION:") + pp.Optional(word)("description")
+history_record = pp.Group(is_start("is_start") + time("time"))
+history = pp.Suppress("HISTORY") + pp.ZeroOrMore(history_record)("history")
 
-    def __init__(self):
-        super().__init__()
-        self.grammar = Grammar(
-            r"""task = name newline+
-estimate newline+
-status newline+
-description newline+
-history newline*
-name = "NAME:" whitespace? phrase whitespace?
-estimate = "ESTIMATE:" whitespace? int whitespace?
-description = "DESCRIPTION:" whitespace? phrase whitespace?
-status = "STATUS:" whitespace? status_type whitespace?
-status_type = "Current" / "TODO" / "In Progress" / "Finished"
-history = whitespace? "HISTORY" whitespace? newline* history_records?
-whitespace = ~"[ \t]+"
-newline = "\n" / "\n\r"
-phrase = word (whitespace word)*
-word = ~"[0-9a-zA-Z.!?&-_]+"
-int = ~"[1-9][0-9]*" / "None"
-history_records = history_record (next_history_record)*
-history_record = history_record_type whitespace time whitespace?
-next_history_record = newline+ history_record
-history_record_type = "Start" / "Stop"
-time = year "-" month "-" day " " hours ":" minutes ":" seconds
-year = ~"20[0-9]{2}"
-month = ~"0[1-9]" / ~"1[0-2]"
-day = ~"0[1-9]" / ~"1[0-9]" / ~"2[0-9]" / ~"3[0-1]"
-hours = ~"0[0-9]" / ~"1[0-9]" / ~"2[0-3]"
-minutes = ~"[0-5][0-9]"
-seconds = minutes
-"""
-        )
+task = name + estimate + status + description + history
 
-    def visit_task(self, node, visited_children) -> ParsedTaskData:
-        (name, _nl1, estimate, _nl2, status, _nl3, description, _nl4, history, _nl5) = (
-            visited_children
-        )
-        task_data = ParsedTaskData(
-            name=name,
-            estimate=estimate,
-            description=description,
-            status=status,
-            history=[
-                ParsedTaskHistoryRecord(is_start=is_start, time=history_time)
-                for is_start, history_time in history
-            ],
-        )
-        validate_task_data(task_data)
-        return task_data
 
-    def visit_name(self, node, visited_children):
-        (_name, _ws1, phrase, _ws2) = visited_children
-        return phrase
+def is_parsed_history(history) -> TypeGuard[list[ParsedTaskHistoryRecord]]:
+    return all(
+        history_record.is_start in [True, False]
+        and isinstance(history_record.time, int)
+        for history_record in history
+    )
 
-    def visit_estimate(self, node, visited_children):
-        (_est, _ws1, phrase, _ws2) = visited_children
-        return int(phrase) if phrase.isdigit() else None
 
-    def visit_description(self, node, visited_children):
-        (_desc, _ws1, phrase, _ws2) = visited_children
-        return None if phrase == "None" else phrase
-
-    def visit_status(self, node, visited_children):
-        (_status, _ws1, status_type, _ws2) = visited_children
-        return status_type
-
-    def visit_status_type(self, node, visited_children):
-        return Status(node.text)
-
-    def visit_history(self, node, visited_children):
-        (_ws1, _hist, _ws2, _nl, history_records) = visited_children
-        return history_records[0] if history_records else []
-
-    def visit_history_records(self, node, visited_children):
-        (history_record, rest) = visited_children
-        records = [history_record]
-        records.extend(rest)
-        return records
-
-    def visit_history_record(self, node, visited_children):
-        (history_record_type, _ws1, history_time, _ws2) = visited_children
-        return (history_record_type, history_time)
-
-    def visit_next_history_record(self, node, visited_children):
-        (_nl, history_record) = visited_children
-        return history_record
-
-    def visit_history_record_type(self, node, visited_children):
-        return node.text == "Start"
-
-    def visit_time(self, node, visited_children):
-        return calendar.timegm(strptime(node.text, TIME_FORMAT))
-
-    def visit_phrase(self, node, visited_children):
-        return node.text
-
-    def visit_int(self, node, visited_children):
-        return node.text
-
-    def generic_visit(self, node, visited_children):
-        return visited_children
+def is_parsed_task(data) -> TypeGuard[ParsedTaskData]:
+    return (
+        isinstance(data.name, str)
+        and isinstance(data.estimate, (int, type(None)))
+        and isinstance(data.description, (str, type(None)))
+        and isinstance(data.status, Status)
+        and is_parsed_history(data.history)
+    )
 
 
 def parse_task_display(task_display: str) -> ParsedTaskData:
     """Parses a task's display string into the data necessary to create the task and it's history"""
-    task_data = TaskVisitor().parse(task_display)
+    task_data = task.parse_string(task_display)
+
+    if not (is_parsed_task(task_data)):
+        raise AssertionError("Invalid parsed task data")
+
+    validate_task_data(task_data)
     return task_data
 
 

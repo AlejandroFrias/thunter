@@ -8,6 +8,11 @@ from thunter.task_parser import (
     display_task,
     parse_task_display,
     validate_task_data,
+    name,
+    estimate,
+    status,
+    description,
+    history,
 )
 
 
@@ -196,3 +201,39 @@ class TestTaskParser(TestCase):
             "History must alternate between Start and Stop",
             str(error.exception),
         )
+
+    def test_parse_name(self):
+        """Test parsing a task name."""
+        name_display = "NAME: Test Task"
+        parsed_data = name.parse_string(name_display)
+        self.assertEqual(parsed_data.name, "Test Task")
+
+    def test_parse_estimate(self):
+        """Test parsing a task estimate."""
+        estimate_display = "ESTIMATE: 5"
+        parsed_data = estimate.parse_string(estimate_display)
+        self.assertEqual(parsed_data.estimate, 5)
+
+    def test_parse_status(self):
+        """Test parsing a task status."""
+        status_display = "STATUS: In Progress"
+        parsed_data = status.parse_string(status_display)
+        self.assertEqual(parsed_data.status, Status.IN_PROGRESS)
+
+    def test_parse_description(self):
+        """Test parsing a task description."""
+        description_display = "DESCRIPTION: This is a test task."
+        parsed_data = description.parse_string(description_display)
+        self.assertEqual(parsed_data.description, "This is a test task.")
+
+    def test_parse_history(self):
+        """Test parsing task history."""
+        history_display = (
+            "HISTORY\nStart\t2021-09-30 21:20:00\nStop\t2021-09-30 21:26:40\n"
+        )
+        parsed_data = history.parse_string(history_display)
+        self.assertEqual(len(parsed_data.history), 2)
+        self.assertTrue(parsed_data.history[0].is_start)  # type: ignore
+        self.assertEqual(parsed_data.history[0].time, 1633036800)  # type: ignore
+        self.assertFalse(parsed_data.history[1].is_start)  # type: ignore
+        self.assertEqual(parsed_data.history[1].time, 1633037200)  # type: ignore
