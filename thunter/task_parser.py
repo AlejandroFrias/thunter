@@ -22,6 +22,9 @@ class ParsedTaskData:
     history: list[ParsedTaskHistoryRecord]
 
 
+# TODO: consider using https://github.com/pyparsing/pyparsing?tab=readme-ov-file
+
+
 class TaskVisitor(NodeVisitor):
     grammar: Grammar
 
@@ -38,7 +41,7 @@ estimate = "ESTIMATE:" whitespace? int whitespace?
 description = "DESCRIPTION:" whitespace? phrase whitespace?
 status = "STATUS:" whitespace? status_type whitespace?
 status_type = "Current" / "TODO" / "In Progress" / "Finished"
-history = whitespace? "HISTORY" whitespace? newline+ history_records?
+history = whitespace? "HISTORY" whitespace? newline* history_records?
 whitespace = ~"[ \t]+"
 newline = "\n" / "\n\r"
 phrase = word (whitespace word)*

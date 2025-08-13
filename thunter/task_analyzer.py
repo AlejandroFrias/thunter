@@ -1,6 +1,6 @@
 import pandas as pd
 
-from thunter.constants import TableName
+from thunter.constants import Status, TableName
 from thunter.db import Database
 
 
@@ -31,7 +31,7 @@ class TaskAnalyzer(Database):
         """Fetch the tasks as a DataFrame."""
         with self.connect() as con:
             df = pd.read_sql(
-                f"SELECT id, estimate, name, created_at FROM {TableName.TASKS.value}",
+                f"SELECT id, estimate, name, status, created_at FROM {TableName.TASKS.value}",
                 con=con,
                 parse_dates={"created_at": "s"},
             )

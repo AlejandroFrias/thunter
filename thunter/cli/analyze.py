@@ -1,6 +1,7 @@
 import typer
 from IPython import embed
 
+from thunter.constants import Status
 from thunter.task_analyzer import TaskAnalyzer
 
 app = typer.Typer()
@@ -19,5 +20,9 @@ def analyze():
     history_df.loc[history_df["is_start"], "time"] *= -1
     # sum up the time for each task
     actual_time = history_df.groupby("taskid", sort=False)["time"].sum()
+    finished_tasks = tasks_df[tasks_df["status"] == Status.FINISHED.value]
+    comparison_df = finished_tasks.merge(actual_time, left_on="id", right_on="taskid")
+
+    # TODO: time series plot of estimate vs actual
 
     embed()
