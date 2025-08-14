@@ -50,8 +50,9 @@ class TestTaskHunter(TestCase):
         stopped_current_task = self.thunter.stop_current_task()
         self.assertEqual(stopped_current_task.id, current_task.id)  # type: ignore
         self.assertEqual(self.thunter.get_current_task(), None)
-        with self.assertRaises(ThunterCouldNotFindTaskError):
-            self.thunter.get_task()
+
+        default_recent_task = self.thunter.get_task()
+        self.assertEqual(default_recent_task.id, default_current_task.id)
 
     def test_get_finished_task(self):
         finished_task = self.thunter.get_task("a finished task")

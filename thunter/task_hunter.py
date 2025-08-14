@@ -35,7 +35,19 @@ class TaskHunter(Database):
         if not task_identifier:
             current_task = self.get_current_task()
             if not current_task:
-                raise ThunterCouldNotFindTaskError("No Current task found.")
+                where_clause = ""
+                params = []
+                if statuses:
+                    where_clause = "status IN (" + ",".join(len(statuses) * "?") + ")"
+                    params.extend(map(lambda s: s.value, statuses))
+                recent_tasks = self.select_from_task(
+                    order_by="last_modified_at DESC",
+                    where_clause=where_clause,
+                    params=params,
+                )
+                if recent_tasks:
+                    return recent_tasks[0]
+                raise ThunterCouldNotFindTaskError("No task found.")
             return current_task
 
         params: list[str] = []

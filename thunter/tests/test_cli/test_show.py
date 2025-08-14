@@ -19,7 +19,7 @@ class TestShow(CliCommandTestBaseClass):
         self.assertIn("Could not find task for identifier: 999", str(result.exception))
         self.assertGreater(result.exit_code, 0)
 
+    def test_show_most_recent_task(self):
         self.thunter.stop_current_task()
         result = self.runner.invoke(thunter_cli_app, ["show"])
-        self.assertIn("No Current task found.", str(result.exception))
-        self.assertGreater(result.exit_code, 0)
+        self.assertIn("a long task", str(result.output))

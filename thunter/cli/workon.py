@@ -46,32 +46,37 @@ def workon(
     hunter = TaskHunter()
     task_id_str = " ".join(task_id) if task_id else None
     try:
-        # TODO: if no task_id, then work on the most recent task
-        # TODO: use partial match of task_id if no exact match is found
         task = hunter.get_task(
             task_identifier=task_id_str,
             statuses=set([Status.CURRENT, Status.IN_PROGRESS, Status.TODO]),
             exact_match=True,
         )
     except ThunterCouldNotFindTaskError:
-        if task_id_str and create:
-            if estimate_hours is None:
-                while estimate_hours is None:
-                    estimate_hours = typer.prompt("Estimate (hours)", type=int)
-                    if (
-                        not estimate_hours
-                        or isinstance(estimate_hours, int)
-                        and estimate_hours < 1
-                    ):
-                        typer.echo("Estimate must be at least 1 hour.")
-
-            task = hunter.create_task(
-                name=task_id_str,
-                estimate=estimate_hours,
-                description=description,
-            )
+        if task_id_str:
+            if create:
+                task = hunter.create_task(
+                    name=task_id_str,
+                    estimate=get_estimate(estimate_hours),
+                    description=description,
+                )
+            else:
+                # try to find task with a partial match
+                task = hunter.get_task(
+                    task_identifier=task_id_str,
+                    statuses=set([Status.CURRENT, Status.IN_PROGRESS, Status.TODO]),
+                    exact_match=False,
+                )
         else:
             raise
 
     hunter.workon_task(task.id)
     ctx.invoke(ls, current=True)
+
+
+def get_estimate(estimate_hours: int | None) -> int:
+    """Prompt user for an estimate if one was not given yet."""
+    while estimate_hours is None or estimate_hours < 1:
+        estimate_hours = typer.prompt("Estimate (hours)", type=int)
+        if not estimate_hours or isinstance(estimate_hours, int) and estimate_hours < 1:
+            typer.echo("Estimate must be at least 1 hour.")
+    return estimate_hours
