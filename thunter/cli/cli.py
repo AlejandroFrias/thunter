@@ -6,7 +6,6 @@ import typer.core
 from rich.console import Console
 
 from thunter import settings
-from thunter.cli.analyze import app as analyzer_app
 from thunter.cli.create import app as create_app
 from thunter.cli.db import app as db_app
 from thunter.cli.edit import app as edit_app
@@ -61,7 +60,6 @@ thunter_cli_app.add_typer(estimate_app)
 thunter_cli_app.add_typer(edit_app)
 thunter_cli_app.add_typer(rm_app)
 thunter_cli_app.add_typer(db_app)
-thunter_cli_app.add_typer(analyzer_app)
 
 
 @thunter_cli_app.callback()
