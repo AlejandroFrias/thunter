@@ -3,7 +3,6 @@ from thunter.constants import (
     TableName,
     ThunterCouldNotFindTaskError,
     ThunterFoundMultipleTasksError,
-    now,
 )
 from thunter.db import Database
 from thunter.models import Task, TaskHistoryRecord, TaskIdentifier

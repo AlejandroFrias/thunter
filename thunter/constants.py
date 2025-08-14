@@ -1,10 +1,4 @@
-from datetime import datetime
 from enum import Enum
-from time import gmtime, strftime
-
-
-def now():
-    return int(datetime.now().timestamp())
 
 
 class TableName(Enum):
@@ -27,11 +21,6 @@ STATUS_ORDERING = [
 ]
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-
-
-def display_time(seconds: int) -> str:
-    """App-wide function for formatting and displaying times."""
-    return strftime(TIME_FORMAT, gmtime(seconds))
 
 
 class ThunterError(Exception):

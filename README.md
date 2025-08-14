@@ -93,10 +93,10 @@ I use `thunter ls` to check my unfinished tasks.
 
 ### Directory/File summary
 
-* `models/` - folder for in memory representation of data models
+* `models/` - in memory representation of data models
     * `task.py` - the main task, that stores task description info like name and estimate
     * `task_history_record.py` - represents a single historical record of when work was started/stopped on a task
-* `cli.py` - entry point for the fastapi CLI
+* `cli/` - cli entry point and commands
 * `constants.py` - shared constants, enums, etc.
 * `settings.py` - global settings and their defaults
 * `task_hunter.py` - main entry point for interacting with the stored tasks and history

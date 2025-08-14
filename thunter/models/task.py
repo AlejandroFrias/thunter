@@ -4,8 +4,8 @@ from functools import total_ordering
 from thunter.constants import (
     STATUS_ORDERING,
     Status,
-    display_time,
 )
+from thunter.time import display_time
 
 
 # task identifiers can be their ID or their name

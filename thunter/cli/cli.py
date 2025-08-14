@@ -6,23 +6,19 @@ import typer.core
 from rich.console import Console
 
 from thunter import settings
-from thunter.settings import (
-    print_config,
-    needs_init,
-)
+from thunter.cli.analyze import app as analyzer_app
+from thunter.cli.create import app as create_app
+from thunter.cli.db import app as db_app
+from thunter.cli.edit import app as edit_app
+from thunter.cli.estimate import app as estimate_app
+from thunter.cli.finish import app as finish_app
 from thunter.cli.init import app as init_app, init
 from thunter.cli.ls import app as ls_app
-from thunter.cli.show import app as show_app
-from thunter.cli.workon import app as workon_app
-from thunter.cli.create import app as create_app
 from thunter.cli.restart import app as restart_app
-from thunter.cli.stop import app as stop_app
-from thunter.cli.finish import app as finish_app
-from thunter.cli.estimate import app as estimate_app
-from thunter.cli.edit import app as edit_app
 from thunter.cli.rm import app as rm_app
-from thunter.cli.db import app as db_app
-from thunter.cli.analyze import app as analyzer_app
+from thunter.cli.show import app as show_app
+from thunter.cli.stop import app as stop_app
+from thunter.cli.workon import app as workon_app
 from thunter.constants import ThunterError
 
 
@@ -90,9 +86,9 @@ def main_callback(
     ] = False,
 ):
     """THunter - your task hunter, tracking time spent on your TODO list!"""
-    print_config["silent"] = silent or settings.THUNTER_SILENT
-    print_config["debug"] = debug or settings.DEBUG
-    if ctx.invoked_subcommand != "init" and needs_init():
+    settings.print_config["silent"] = silent or settings.THUNTER_SILENT
+    settings.print_config["debug"] = debug or settings.DEBUG
+    if ctx.invoked_subcommand != "init" and settings.needs_init():
         ctx.invoke(init)
 
 
@@ -103,7 +99,7 @@ def main(silent: bool = False):
         sys.exit(1)
     except ThunterError as thunter_error:
         console = Console()
-        if print_config["debug"]:
+        if settings.print_config["debug"]:
             console.print_exception(show_locals=True)
         console.print(str(thunter_error))
         sys.exit(thunter_error.exit_status)

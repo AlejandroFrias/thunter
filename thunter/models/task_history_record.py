@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from time import time
 from functools import total_ordering
 
-from thunter.constants import display_time
+from thunter.time import display_time
 
 
 @total_ordering

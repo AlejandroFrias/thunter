@@ -1,10 +1,12 @@
 from contextlib import contextmanager
+
 import sqlite3
 
 from thunter import settings
-from thunter.constants import Status, TableName, ThunterNotInitializedError, now
+from thunter.constants import Status, TableName
 from thunter.models.task import Task
 from thunter.models.task_history_record import TaskHistoryRecord
+from thunter.time import now_sec
 
 
 class Database:
@@ -59,7 +61,7 @@ class Database:
         sql = ("UPDATE {table} SET {field}=?, last_modified_at=? WHERE id=?").format(
             table=TableName.TASKS.value, field=field
         )
-        sql_params = (value, now(), taskid)
+        sql_params = (value, now_sec(), taskid)
         with self.connect() as conn:
             conn.execute(sql, sql_params)
 
