@@ -46,6 +46,8 @@ def workon(
     hunter = TaskHunter()
     task_id_str = " ".join(task_id) if task_id else None
     try:
+        # TODO: if no task_id, then work on the most recent task
+        # TODO: use partial match of task_id if no exact match is found
         task = hunter.get_task(
             task_identifier=task_id_str,
             statuses=set([Status.CURRENT, Status.IN_PROGRESS, Status.TODO]),
@@ -53,6 +55,16 @@ def workon(
         )
     except ThunterCouldNotFindTaskError:
         if task_id_str and create:
+            if estimate_hours is None:
+                while estimate_hours is None:
+                    estimate_hours = typer.prompt("Estimate (hours)", type=int)
+                    if (
+                        not estimate_hours
+                        or isinstance(estimate_hours, int)
+                        and estimate_hours < 1
+                    ):
+                        typer.echo("Estimate must be at least 1 hour.")
+
             task = hunter.create_task(
                 name=task_id_str,
                 estimate=estimate_hours,
@@ -62,4 +74,4 @@ def workon(
             raise
 
     hunter.workon_task(task.id)
-    ctx.invoke(ls, open=True)
+    ctx.invoke(ls, current=True)
