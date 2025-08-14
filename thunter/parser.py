@@ -42,9 +42,16 @@ time = pp.Word(pp.nums + " -:")("time").set_parse_action(parse_time)
 name = pp.Suppress("NAME:") + word("name")
 estimate = pp.Suppress("ESTIMATE:") + number("estimate")
 status = pp.Suppress("STATUS:") + status_type("status")
-description = pp.Suppress("DESCRIPTION:") + pp.Optional(word)("description")
+
+
+description = pp.Suppress("DESCRIPTION:") + pp.rest_of_line(
+    "description"
+).set_parse_action(
+    lambda t: t.description.strip() if isinstance(t.description, str) else ""
+)
+
 history_record = pp.Group(is_start("is_start") + time("time"))
-history = pp.Suppress("HISTORY") + pp.ZeroOrMore(history_record)("history")
+history = pp.Suppress(pp.Keyword("HISTORY")) + pp.ZeroOrMore(history_record)("history")
 
 task = name + estimate + status + description + history
 

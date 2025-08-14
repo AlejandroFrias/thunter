@@ -226,6 +226,12 @@ class TestTaskParser(TestCase):
         parsed_data = description.parse_string(description_display)
         self.assertEqual(parsed_data.description, "This is a test task.")
 
+    def test_parse_empty_description(self):
+        """Test parsing a task description."""
+        description_display = "DESCRIPTION: "
+        parsed_data = description.parse_string(description_display)
+        self.assertEqual(parsed_data.description, "")
+
     def test_parse_history(self):
         """Test parsing task history."""
         history_display = (

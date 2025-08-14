@@ -5,6 +5,7 @@ import typer
 
 from thunter.cli.ls import ls
 from thunter import settings
+from thunter.constants import Status
 from thunter.settings import thunter_print
 from thunter.task_hunter import TaskHunter
 from thunter.parser import parse_task_display
@@ -26,10 +27,13 @@ def edit(
 ):
     """Edit a task. Use with caution."""
     hunter = TaskHunter()
-    if task_identifier:
+    if task_identifier and task_identifier.isdigit():
         task = hunter.get_task(task_identifier)
     else:
-        task = hunter.get_current_task()
+        task = hunter.get_task(
+            task_identifier=task_identifier,
+            statuses={Status.CURRENT, Status.IN_PROGRESS, Status.TODO},
+        )
 
     if not task:
         thunter_print("Could not find task '" + (task_identifier or "CURRENT") + "'")
