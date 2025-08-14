@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import pandas as pd
 
-from thunter.task_analyzer import TaskAnalyzer
+from thunter.analyzer import TaskAnalyzer
 from thunter.tests import setUpTestDatabase, tearDownTestDatabase
 
 

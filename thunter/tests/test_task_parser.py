@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from thunter.constants import Status, ThunterTaskValidationError
 from thunter.models import Task, TaskHistoryRecord
-from thunter.task_parser import (
+from thunter.parser import (
     ParsedTaskData,
     ParsedTaskHistoryRecord,
     display_task,

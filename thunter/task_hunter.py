@@ -6,7 +6,7 @@ from thunter.constants import (
 )
 from thunter.db import Database
 from thunter.models import Task, TaskHistoryRecord, TaskIdentifier
-from thunter.task_parser import display_task
+from thunter.parser import display_task
 
 
 class TaskHunter(Database):

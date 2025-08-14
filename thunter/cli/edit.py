@@ -7,7 +7,7 @@ from thunter.cli.ls import ls
 from thunter import settings
 from thunter.settings import thunter_print
 from thunter.task_hunter import TaskHunter
-from thunter.task_parser import parse_task_display
+from thunter.parser import parse_task_display
 
 
 app = typer.Typer()

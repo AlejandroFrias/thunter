@@ -2,7 +2,7 @@ import typer
 from IPython import embed
 
 from thunter.constants import Status
-from thunter.task_analyzer import TaskAnalyzer
+from thunter.analyzer import TaskAnalyzer
 
 app = typer.Typer()
 
