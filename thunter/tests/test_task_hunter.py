@@ -93,6 +93,19 @@ class TestTaskHunter(TestCase):
         fetched_task = self.thunter.get_task(new_task.id)
         self.assertEqual(fetched_task, new_task)
 
+    def test_create_task_invalid_name(self):
+        with self.assertRaises(ValueError) as exception:
+            self.thunter.create_task(
+                name="123",
+                estimate=5,
+                description="Invalid number-only task name.",
+                status=Status.TODO,
+            )
+        self.assertEqual(
+            str(exception.exception),
+            "Task cannot be a number, as that would conflict with task IDs.",
+        )
+
     def test_get_tasks(self):
         tasks = self.thunter.get_tasks()
         self.assertEqual(len(tasks), 6)

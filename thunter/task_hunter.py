@@ -104,6 +104,10 @@ class TaskHunter(Database):
         :param description: A description of the task.
         :param status: The initial status of the task [default: TODO].
         """
+        if name.isdigit():
+            raise ValueError(
+                "Task cannot be a number, as that would conflict with task IDs."
+            )
         new_task_id = self.insert_task(
             name=name,
             estimate=estimate,
