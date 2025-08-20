@@ -59,7 +59,6 @@ Switching to the `main` branch will stop tracking time.
 
 Switching to any other branch will start tracking time on a task with the same name, possibly creating the task if it didn't exist and prompting you for a time estimate.
 
-
 ```
 #!/bin/bash
 branch_name=$(git rev-parse --abbrev-ref HEAD)
