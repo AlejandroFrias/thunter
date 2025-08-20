@@ -22,8 +22,8 @@ class TaskHistoryRecord:
         )
 
     @classmethod
-    def calc_progress(cls, task_history: list["TaskHistoryRecord"]):
-        """Calculates the total time spent on a task based on its history records."""
+    def calc_progress(cls, task_history: list["TaskHistoryRecord"]) -> int:
+        """Calculates the total time (seconds) spent on a task based on its history records."""
         progress = 0
         start_time = 0
         for history_record in sorted(task_history):
@@ -37,17 +37,17 @@ class TaskHistoryRecord:
         return progress
 
     @classmethod
-    def display_progress(cls, seconds):
+    def display_progress(cls, seconds: int) -> str:
         """Formats the progress time (int seconds) in HH:MM:SS format."""
         minutes, seconds = divmod(seconds, 60)
         hours, minutes = divmod(minutes, 60)
         return "{0:02d}:{1:02d}:{2:02d}".format(hours, minutes, seconds)
 
     @property
-    def time_display(self):
+    def time_display(self) -> str:
         return display_time(self.time)
 
-    def __lt__(self, other):
+    def __lt__(self, other: "TaskHistoryRecord"):
         return (self.taskid, self.time, not self.is_start) < (
             other.taskid,
             other.time,

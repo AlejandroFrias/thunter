@@ -4,13 +4,18 @@ build-backend = "hatchling.build"
 
 [project]
 name = "thunter"
-version = "0.0.0"
-dependencies = ["typer", "rich", "pyparsing", "pandas"]
-requires-python = ">= 3.10"
-authors = [{ name = "Alejandro Frias", email = "joker454@gmail.com" }]
-maintainers = [{ name = "Alejandro Frias", email = "joker454@gmail.com" }]
+version = "1.0.0"
 description = "A CLI To Do list w/ time tracking."
 readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pandas>=2.3.1",
+    "pyparsing>=3.2.3",
+    "rich>=14.1.0",
+    "typer>=0.16.1",
+]
+authors = [{ name = "Alejandro Frias", email = "joker454@gmail.com" }]
+maintainers = [{ name = "Alejandro Frias", email = "joker454@gmail.com" }]
 license = "MIT"
 keywords = ["cli", "todo", "task", "tracking"]
 classifiers = [
@@ -26,3 +31,8 @@ thunter = "thunter.cli:main"
 [project.urls]
 Issues = "https://github.com/AlejandroFrias/thunter/issues"
 Source = "https://github.com/AlejandroFrias/thunter"
+
+[dependency-groups]
+dev = [
+    "coverage>=7.10.4",
+]
