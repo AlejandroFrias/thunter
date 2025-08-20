@@ -24,13 +24,14 @@ class ParsedTaskData:
     history: list[ParsedTaskHistoryRecord]
 
 
-def parse_time(t: pp.ParseResults):
+def parse_time(t: pp.ParseResults) -> int:
+    """parser action for converting time string to seconds"""
     if isinstance(t.time, str):
         return calendar.timegm(strptime(t.time, TIME_FORMAT))
     raise ValueError
 
 
-word = pp.Word(pp.alphanums + " .!?&-_")
+word = pp.Word(pp.alphanums + " .!?&-_()")
 number = pp.common.integer
 status_type = pp.one_of([s.value for s in Status]).set_parse_action(
     lambda t: Status(t.status)

@@ -90,7 +90,7 @@ def main_callback(
         ctx.invoke(init)
 
 
-def main(silent: bool = False):
+def main():
     try:
         thunter_cli_app()
     except KeyboardInterrupt:
