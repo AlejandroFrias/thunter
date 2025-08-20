@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "thunter"
-version = "1.0.0"
+version = "0.1.0"
 description = "A CLI To Do list w/ time tracking."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -33,6 +33,4 @@ Issues = "https://github.com/AlejandroFrias/thunter/issues"
 Source = "https://github.com/AlejandroFrias/thunter"
 
 [dependency-groups]
-dev = [
-    "coverage>=7.10.4",
-]
+dev = ["coverage>=7.10.4"]

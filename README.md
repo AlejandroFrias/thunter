@@ -32,6 +32,7 @@ The `thunter` CLI tool has commands for:
 * `estimate` to update your estimate
 * `edit` to edit any aspect of a task, including it's history
 * `rm` to delete/remove tasks
+* `db` will start a sqlite3 session with the thunter database. `tasks` and `history` are the 2 tables
 
 ### Configuration options
 Environment variables (see [settings.py](thunter/settings.py)):
@@ -44,21 +45,12 @@ Environment variables (see [settings.py](thunter/settings.py)):
 
 ## My git/thunter workflow
 
-Many of us already have our git workflows.
-Below are 2 ways to integrate `thunter` into your existing workflows: git-hooks and aliases
+With the below hook and aliases:
+* checking out a branch will start tracking time spent on it
+* checking out `main` will stop tracking time
+* deleting a branch will mark the task as finished
 
-
-### Git Hooks
-
-* `post-checkout` - handles creating and tracking time spent on tasks
-* `post-merge` - handles marking tasks as finished
-
-####  *post-checkout*
-
-Switching to the `main` branch will stop tracking time.
-
-Switching to any other branch will start tracking time on a task with the same name, possibly creating the task if it didn't exist and prompting you for a time estimate.
-
+### *post-checkout*
 ```
 #!/bin/bash
 branch_name=$(git rev-parse --abbrev-ref HEAD)
@@ -74,25 +66,17 @@ if [[ "$is_branch_switch" == "1" ]]; then
 fi
 ```
 
-#### *post-merge*
-
-TODO write and figure out how the merge hook works
-
 ### Git Aliases
-
-If you are consistent with your usage of aliases, this can be another way to integrate the 2 together.
-I prefer git-hooks because they work even when I don't use my aliases, like when using a GUI tool or some other git wrapper like graphite.
-
-You can use a combination of both. I use just the `git status` alias below and the 2 hooks above.
 
 ```
 ## ~/.gitconfig
 
 [alias]
     s = "!git status && hash thunter 2>/dev/null && if [ \"$(git rev-parse --abbrev-ref HEAD)\" = \"main\" ]; then THUNTER_SILENT=1 thunter stop; else THUNTER_SILENT=1 thunter workon --create $(git rev-parse --abbrev-ref HEAD); fi"
-    ch = "!git checkout $1 && hash thunter 2>/dev/null && if [ \"$(git rev-parse --abbrev-ref HEAD)\" = \"master\" ]; then THUNTER_SILENT=1 thunter stop; else THUNTER_SILENT=1 thunter workon --create $(git rev-parse --abbrev-ref HEAD); fi"
-    chb = !git checkout -b $1 && hash thunter 2>/dev/null && thunter workon --create $(git rev-parse --abbrev-ref HEAD)
-    chm = ! git checkout main && hash thunter 2>/dev/null && THUNTER_SILENT=1 thunter stop
     bd = ! git branch -d $1 && hash thunter 2>/dev/null && THUNTER_SILENT=1 thunter finish
     bdd = ! git branch -D $1 && hash thunter 2>/dev/null && THUNTER_SILENT=1 thunter finish
 ```
+
+# Coming Soon
+
+`thunter analyze` command that will give options for some basic data analysis on how accurate your time estimates are.
