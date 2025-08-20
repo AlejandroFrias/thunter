@@ -33,4 +33,7 @@ Issues = "https://github.com/AlejandroFrias/thunter/issues"
 Source = "https://github.com/AlejandroFrias/thunter"
 
 [dependency-groups]
+build = [
+    "twine>=6.1.0",
+]
 dev = ["coverage>=7.10.4"]
