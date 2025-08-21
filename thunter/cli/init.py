@@ -1,11 +1,9 @@
 import os
 import shutil
-import sqlite3
 from typing import Annotated
 
 import typer
 
-from thunter.constants import TableName
 from thunter import settings
 from thunter.db import Database
 from thunter.settings import thunter_print, needs_init

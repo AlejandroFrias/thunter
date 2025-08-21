@@ -31,6 +31,7 @@ def setUpTestDatabase() -> TestDatabaseEnvironment:
     dir_path = os.path.dirname(os.path.realpath(__file__))
     with open(dir_path + "/test_database_fixture.sql", "r") as f:
         conn.executescript(f.read())
+    conn.close()
 
     return env
 
@@ -41,7 +42,6 @@ def tearDownTestDatabase(env: TestDatabaseEnvironment) -> None:
 
 
 class CliCommandTestBaseClass(TestCase):
-
     def setUp(self):
         self.env = setUpTestDatabase()
         self.thunter = TaskHunter()

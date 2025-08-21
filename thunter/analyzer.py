@@ -1,6 +1,6 @@
 import pandas as pd
 
-from thunter.constants import Status, TableName
+from thunter.constants import TableName
 from thunter.db import Database
 
 

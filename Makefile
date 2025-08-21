@@ -1,36 +1,37 @@
 .DEFAULT_GOAL := help
+VENV = .venv
+DIST = dist
 
 .PHONY: help
 help:
-	@echo "Try 'make install' or 'make develop' to start using Hunt"
-	@echo "'make db' will open the Hunt database in SQLite for direct access if needed, but hunt 'edit' should be preferred"
+	@echo "'make test lint' for testing and linting."
+	@echo "You can use 'uv' or 'pip' to install thunter CLI tool from source to play around with your latest version"
 
-.PHONY: install
-install:
-	pip install .
+.PHONY: lint
+lint: $(VENV)/bin/activate
+	$(VENV)/bin/ruff check
 
-.PHONY: uninstall
-uninstall:
-	pip uninstall .
+.PHONY: format
+format: $(VENV)/bin/activate
+	$(VENV) ruff check --fix
 
-.PHONY: develop
-develop:
-	pip install -e .
+.PHONY: test
+test: $(VENV)/bin/activate
+	$(VENV)/bin/coverage run -m unittest
+	$(VENV)/bin/coverage report
 
 .PHONY: clean
 clean:
-	rm -fr ~/.thunter
-	rm -fr hunt.egg-info/
-	rm -fr thunter/__pycache__/
+	rm -rf thunter/__pycache__
+	rm -rf .venv
 
-.PHONY: lint
-lint:
-	black --check thunter/
+.PHONY: build
+build:
+	uv build
 
-.PHONY: format
-format:
-	black thunter/
+.PHONY: upload
+upload:
+	uv run twine check $(DIST)/* && uv run twine upload $(DIST)/*
 
-.PHONY: db
-db:
-	@sqlite3 $(shell python -c "from thunter import settings; print(settings.DATABASE)")
+$(VENV)/bin/activate: pyproject.toml
+	uv sync
